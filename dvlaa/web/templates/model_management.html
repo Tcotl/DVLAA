@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - LLM 模型管理{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container">
+    <main class="dvlaa-main">
+        <div class="panel-card model-management-shell">
+            <div class="panel-header model-management-toolbar">
+                <div><span>[LLM 管理] 模型提供商与推理路由</span><small>管理模型地址、凭据、参数与默认路由</small></div>
+                <div class="model-management-actions"><span class="badge-tag solved">当前模型: {{ current_model }}</span><button type="button" class="btn-dv btn-dv-primary" onclick="openModelDialog()">添加配置</button></div>
+            </div>
+            <div class="panel-body">
+                <div id="modelActionMessage" class="model-action-message" role="status" aria-live="polite" hidden></div>
+                <section class="local-model-recommendation">
+                    <div class="local-model-recommendation-head">
+                        <div>
+                            <span class="dashboard-eyebrow">LOCAL MODEL DEPLOYMENT</span>
+                            <h1>本地模型环境评估与一键部署</h1>
+                            <p>系统安装包不再附带大模型文件。根据当前部署资源选择模型后，系统将在后台下载、显示进度并自动切换到该 LOCAL 模型。</p>
+                        </div>
+                        <span class="badge-tag basic">推荐：第 {{ local_model_data.recommended_tier }} 档</span>
+                    </div>
+                    <div class="local-resource-grid">
+                        <div><span>系统架构</span><strong>{{ local_model_data.resources.architecture }}</strong></div>
+                        <div><span>CPU 核心</span><strong>{{ local_model_data.resources.cpu_count }}</strong></div>
+                        <div><span>可用内存</span><strong>{{ local_model_data.resources.memory_gb }} GB</strong></div>
+                        <div><span>可用磁盘</span><strong>{{ local_model_data.resources.disk_free_gb }} GB</strong></div>
+                        <div><span>推荐性能档</span><strong>第 {{ local_model_data.recommended_tier }} 档</strong></div>
+                    </div>
+
+                    <div class="siliconflow-recommendation">
+                        <div class="siliconflow-recommendation-copy">
+                            <span class="dashboard-eyebrow">CLOUD API FALLBACK</span>
+                            <strong>本地资源不足？使用硅基流动云端模型</strong>
+                            <p>可前往硅基流动申请 API Key，无需在本地下载大模型。目前 <code>Qwen/Qwen3.5-4B</code> 与 <code>Qwen/Qwen3-8B</code> 可免费使用。</p>
+                        </div>
+                        <div class="siliconflow-recommendation-actions">
+                            <span class="badge-tag basic">已内置默认配置</span>
+                            <a class="btn-dv btn-dv-sm btn-dv-primary" href="https://cloud.siliconflow.cn/" target="_blank" rel="noopener noreferrer">申请硅基流动 API</a>
+                        </div>
+                    </div>
+
+                    <div class="local-tier-list">
+                        {% for tier in local_model_data.tiers %}
+                        <section class="local-tier-section {% if tier.recommended %}recommended{% endif %}">
+                            <div class="local-tier-heading">
+                                <div><span class="local-tier-index">{{ tier.tier }}</span><div><strong>{{ tier.name }}</strong><small>{{ tier.memory }} · {{ tier.description }}</small></div></div>
+                                {% if tier.recommended %}<span class="badge-tag basic">当前环境推荐</span>{% endif %}
+                            </div>
+                            <div class="local-model-grid">
+                                {% for model in tier.models %}
+                                <article class="local-model-card {% if current_model_entry.local_catalog_id == model.id %}active{% endif %}" id="localModelCard_{{ model.id }}">
+                                    <div class="local-model-card-head">
+                                        <div><h2>{{ model.name }}</h2><code>{{ model.repo_id }}</code></div>
+                                        {% if model.installed %}<span class="badge-tag basic">已安装</span>{% else %}<span class="badge-tag medium">未下载</span>{% endif %}
+                                    </div>
+                                    <p>{{ model.note }}</p>
+                                    <div class="local-model-specs"><span>模型文件约 {{ model.size_gb }} GB</span><span>建议内存 {{ model.memory_gb }} GB</span></div>
+                                    <div class="local-download-progress" id="localProgress_{{ model.id }}" hidden>
+                                        <div><span class="local-progress-message">准备下载</span><strong class="local-progress-percent">0%</strong></div>
+                                        <div class="local-progress-track"><span style="width:0%"></span></div>
+                                        <small class="local-progress-size">等待任务启动</small>
+                                    </div>
+                                    <div class="local-model-actions">
+                                        {% if current_model_entry.local_catalog_id == model.id and current_model == 'qwen-local' %}
+                                        <button type="button" class="btn-dv btn-dv-sm btn-dv-success" disabled>当前 LOCAL 模型</button>
+                                        {% elif model.installed %}
+                                        <button type="button" class="btn-dv btn-dv-sm btn-dv-primary" onclick="activateLocalModel('{{ model.id }}')">设为当前模型</button>
+                                        {% else %}
+                                        <button type="button" class="btn-dv btn-dv-sm btn-dv-primary" onclick="installLocalModel('{{ model.id }}', this)">下载并一键部署</button>
+                                        {% endif %}
+                                    </div>
+                                </article>
+                                {% endfor %}
+                            </div>
+                        </section>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <div class="model-summary-grid">
+                    <div><strong>{{ model_entries|length }}</strong><span>模型配置</span></div>
+                    <div><strong>{{ model_entries|selectattr('configured')|list|length }}</strong><span>已完成接入</span></div>
+                    <div><strong>{{ model_entries|selectattr('is_active')|list|length }}</strong><span>已启用</span></div>
+                    <div><strong>OpenAI</strong><span>兼容协议</span></div>
+                </div>
+                <p class="model-management-intro">LOCAL 默认槽位不包含模型文件；远程 API Key 仅在后端配置文件中保存，页面只显示掩码。</p>
+                <div class="model-management-grid">
+                    {% for model in model_entries %}
+                    <article class="model-management-card {% if current_model == model.id %}active{% endif %}">
+                        <div class="model-management-card-head">
+                            <div><span class="badge-tag {% if model.provider == 'local' or model.provider == 'ollama' %}agent{% else %}owasp{% endif %}">{{ model.provider|upper }}</span><h2>{{ model.name }}</h2></div>
+                            <div class="model-card-statuses">
+                                {% if model.is_default %}<span class="badge-tag medium">默认</span>{% endif %}
+                                {% if model.configured and model.is_active %}<span class="badge-tag basic">可用</span>{% elif not model.is_active %}<span class="badge-tag hard">已停用</span>{% else %}<span class="badge-tag hard">待配置</span>{% endif %}
+                            </div>
+                        </div>
+                        <dl class="model-management-meta">
+                            <div><dt>模型名称</dt><dd>{{ model.model }}</dd></div>
+                            <div><dt>Base URL</dt><dd>{{ model.base_url or '本地推理引擎' }}</dd></div>
+                            <div><dt>API Key</dt><dd>{{ model.api_key_masked }}</dd></div>
+                            <div><dt>生成参数</dt><dd>Temperature {{ model.temperature }} · Max Tokens {{ model.max_tokens }} · Timeout {{ model.timeout }}s</dd></div>
+                        </dl>
+                        <p>{{ model.note or '自定义模型提供商配置' }}</p>
+                        <div class="model-card-actions">
+                            <button type="button" class="btn-dv btn-dv-sm {% if current_model == model.id %}btn-dv-success{% else %}btn-dv-primary{% endif %}" onclick="setManagedModel('{{ model.id }}')" {% if not model.configured or not model.is_active %}disabled{% endif %}>{% if current_model == model.id %}当前使用中{% else %}设为当前模型{% endif %}</button>
+                            <button type="button" class="btn-dv btn-dv-sm" onclick="testManagedModel('{{ model.id }}')">连接测试</button>
+                            <button type="button" class="btn-dv btn-dv-sm" onclick="editManagedModel('{{ model.id }}')">编辑</button>
+                            {% if not model.builtin %}<button type="button" class="btn-dv btn-dv-sm btn-dv-danger" onclick="deleteManagedModel('{{ model.id }}')">删除</button>{% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="modelConfigModal" class="modal-overlay model-config-overlay">
+    <div class="modal-content model-config-dialog">
+        <div class="modal-header"><div><div class="modal-title" id="modelDialogTitle">添加 LLM 配置</div><small>配置模型提供商信息与推理参数</small></div><button type="button" class="btn-dv btn-dv-sm btn-dv-danger" onclick="closeModelDialog()">关闭</button></div>
+        <form id="modelConfigForm" class="model-config-form" onsubmit="event.preventDefault(); saveManagedModel();">
+            <input type="hidden" id="modelConfigId">
+            <div class="model-form-grid">
+                <label><span>配置名称 *</span><input id="modelName" class="input-dv" required placeholder="例如：本地 Ollama"></label>
+                <label><span>提供商 *</span><select id="modelProvider" class="input-dv" onchange="applyProviderDefaults()"><option value="ollama">Ollama</option><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option><option value="openrouter">OpenRouter</option><option value="siliconflow">硅基流动</option><option value="openai_compatible">OpenAI 兼容服务</option><option value="local">本地内置模型</option></select></label>
+                <label class="model-form-wide"><span>Base URL</span><input id="modelBaseUrl" class="input-dv" placeholder="http://host.docker.internal:11434/v1"></label>
+                <label class="model-form-wide"><span>API Key</span><div class="model-key-field"><input id="modelApiKey" class="input-dv" type="password" autocomplete="new-password" placeholder="编辑时留空将保留原密钥"><button type="button" class="btn-dv btn-dv-sm" onclick="toggleModelKey()">显示/隐藏</button></div></label>
+                <label class="model-form-wide"><span>模型名称 *</span><div class="model-fetch-field"><input id="modelIdentifier" class="input-dv" required list="remoteModelOptions" placeholder="例如：qwen3:8b"><button type="button" class="btn-dv btn-dv-sm" onclick="fetchRemoteModels()">获取模型</button></div><datalist id="remoteModelOptions"></datalist></label>
+                <label><span>Temperature</span><input id="modelTemperature" class="input-dv" type="number" min="0" max="2" step="0.01" value="0.7"></label>
+                <label><span>Max Tokens</span><input id="modelMaxTokens" class="input-dv" type="number" min="32" max="32768" value="600"></label>
+                <label><span>超时时间（秒）</span><input id="modelTimeout" class="input-dv" type="number" min="3" max="300" value="60"></label>
+                <label><span>备注</span><input id="modelNote" class="input-dv" placeholder="配置用途说明"></label>
+                <label class="model-switch-field"><input id="modelActive" type="checkbox" checked><span>启用此配置</span></label>
+                <label class="model-switch-field"><input id="modelDefault" type="checkbox"><span>设为默认模型</span></label>
+            </div>
+            <div class="model-dialog-footer"><button type="button" class="btn-dv" onclick="closeModelDialog()">取消</button><button type="submit" class="btn-dv btn-dv-primary">保存配置</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const managedModels = {{ model_entries|tojson }};
+const initialLocalJobs = {{ local_model_jobs|tojson }};
+const providerDefaults = {
+    ollama: { baseUrl: "http://host.docker.internal:11434/v1", apiKey: "", model: "qwen3:8b" },
+    openai: { baseUrl: "https://api.openai.com/v1", apiKey: "", model: "gpt-4.1-mini" },
+    deepseek: { baseUrl: "https://api.deepseek.com", apiKey: "", model: "deepseek-chat" },
+    siliconflow: { baseUrl: "https://api.siliconflow.cn/v1", apiKey: "", model: "Qwen/Qwen3.5-4B" },
+    openrouter: { baseUrl: "https://openrouter.ai/api/v1", apiKey: "", model: "qwen/qwen3-8b" },
+    openai_compatible: { baseUrl: "", apiKey: "", model: "" },
+    local: { baseUrl: "", apiKey: "", model: "Qwen/Qwen3.5-0.8B" }
+};
+
+let modelMessageTimer = null;
+
+function showModelMessage(message, success = true) {
+    const box = document.getElementById("modelActionMessage");
+    const rawMessage = String(message || "");
+    const pending = rawMessage.startsWith("正在") || rawMessage.startsWith("Testing") || rawMessage.startsWith("Fetching") || rawMessage.startsWith("Creating");
+    const state = pending ? "pending" : (success ? "success" : "error");
+    const title = pending ? uiText("连接检测中") : (success ? uiText("操作成功") : uiText("操作失败"));
+    window.clearTimeout(modelMessageTimer);
+    box.hidden = false;
+    box.className = `model-action-message ${state} visible`;
+    box.replaceChildren();
+
+    const indicator = document.createElement("span");
+    indicator.className = "model-toast-indicator";
+    const content = document.createElement("div");
+    content.className = "model-toast-content";
+    const heading = document.createElement("strong");
+    heading.textContent = title;
+    const detail = document.createElement("p");
+    detail.textContent = uiText(rawMessage);
+    content.append(heading, detail);
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "model-toast-close";
+    closeButton.textContent = uiText("关闭");
+    closeButton.addEventListener("click", hideModelMessage);
+    box.append(indicator, content, closeButton);
+
+    if (!pending) {
+        modelMessageTimer = window.setTimeout(hideModelMessage, success ? 4000 : 8000);
+    }
+}
+
+function hideModelMessage() {
+    const box = document.getElementById("modelActionMessage");
+    if (!box) return;
+    box.classList.remove("visible");
+    window.setTimeout(() => { box.hidden = true; }, 180);
+}
+
+function formatModelBytes(value) {
+    const bytes = Number(value || 0);
+    if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+    return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+}
+
+function renderLocalJob(job) {
+    const progress = document.getElementById(`localProgress_${job.model_id}`);
+    if (!progress) return;
+    progress.hidden = false;
+    const percent = Math.max(0, Math.min(100, Number(job.progress || 0)));
+    progress.querySelector(".local-progress-message").textContent = uiText(job.message || "正在处理");
+    progress.querySelector(".local-progress-percent").textContent = `${percent.toFixed(1)}%`;
+    progress.querySelector(".local-progress-track span").style.width = `${percent}%`;
+    progress.querySelector(".local-progress-size").textContent = `${formatModelBytes(job.downloaded_bytes)} / ${uiText("预计")} ${formatModelBytes(job.expected_bytes)}`;
+}
+
+function pollLocalJob(jobId) {
+    if (!jobId) { window.location.reload(); return; }
+    fetch(`/api/local-models/jobs/${encodeURIComponent(jobId)}`).then(res => res.json()).then(data => {
+        if (!data.ok) throw new Error(data.message || "下载任务状态获取失败");
+        renderLocalJob(data.job);
+        if (data.job.status === "completed") {
+            showModelMessage(data.job.message || "模型部署完成");
+            window.setTimeout(() => window.location.reload(), 800);
+        } else if (data.job.status === "failed") {
+            showModelMessage(data.job.message || "模型部署失败", false);
+        } else {
+            window.setTimeout(() => pollLocalJob(jobId), 1000);
+        }
+    }).catch(error => showModelMessage(error.message, false));
+}
+
+function installLocalModel(modelId, button) {
+    button.disabled = true;
+    button.textContent = uiText("正在创建下载任务");
+    fetch(`/api/local-models/${encodeURIComponent(modelId)}/install`, { method: "POST" })
+        .then(res => res.json()).then(data => {
+            if (!data.ok) throw new Error(data.message || "模型下载任务创建失败");
+            renderLocalJob(data.job);
+            pollLocalJob(data.job.job_id);
+        }).catch(error => {
+            button.disabled = false;
+            button.textContent = uiText("下载并一键部署");
+            showModelMessage(error.message, false);
+        });
+}
+
+function activateLocalModel(modelId) {
+    fetch(`/api/local-models/${encodeURIComponent(modelId)}/activate`, { method: "POST" })
+        .then(res => res.json()).then(data => {
+            if (!data.ok) throw new Error(data.message || "模型切换失败");
+            showModelMessage(data.message || "本地模型已启用");
+            window.setTimeout(() => window.location.reload(), 500);
+        }).catch(error => showModelMessage(error.message, false));
+}
+
+initialLocalJobs.forEach(job => {
+    if (["queued", "downloading", "deploying"].includes(job.status)) {
+        renderLocalJob(job);
+        pollLocalJob(job.job_id);
+    }
+});
+
+function openModelDialog(config = null) {
+    document.getElementById("modelConfigForm").reset();
+    document.getElementById("modelConfigId").value = config?.id || "";
+    document.getElementById("modelDialogTitle").textContent = uiText(config ? "编辑 LLM 配置" : "添加 LLM 配置");
+    document.getElementById("modelName").value = config?.name || "";
+    document.getElementById("modelProvider").value = config?.provider || "ollama";
+    document.getElementById("modelBaseUrl").value = config?.base_url || "";
+    document.getElementById("modelApiKey").value = "";
+    document.getElementById("modelIdentifier").value = config?.model || "";
+    document.getElementById("modelTemperature").value = config?.temperature ?? 0.7;
+    document.getElementById("modelMaxTokens").value = config?.max_tokens ?? 600;
+    document.getElementById("modelTimeout").value = config?.timeout ?? 60;
+    document.getElementById("modelNote").value = config?.note || "";
+    document.getElementById("modelActive").checked = config?.is_active ?? true;
+    document.getElementById("modelDefault").checked = config?.is_default ?? false;
+    if (!config) applyProviderDefaults();
+    document.getElementById("modelConfigModal").classList.add("active");
+    localizeNewContent(document.getElementById("modelConfigModal"));
+}
+
+function closeModelDialog() { document.getElementById("modelConfigModal").classList.remove("active"); }
+function editManagedModel(modelId) { openModelDialog(managedModels.find(item => item.id === modelId)); }
+function toggleModelKey() { const input = document.getElementById("modelApiKey"); input.type = input.type === "password" ? "text" : "password"; }
+
+function applyProviderDefaults() {
+    const values = providerDefaults[document.getElementById("modelProvider").value];
+    document.getElementById("modelBaseUrl").value = values.baseUrl;
+    document.getElementById("modelIdentifier").value = values.model;
+}
+
+function modelFormPayload() {
+    return {
+        name: document.getElementById("modelName").value.trim(),
+        provider: document.getElementById("modelProvider").value,
+        base_url: document.getElementById("modelBaseUrl").value.trim(),
+        api_key: document.getElementById("modelApiKey").value.trim(),
+        model: document.getElementById("modelIdentifier").value.trim(),
+        temperature: Number(document.getElementById("modelTemperature").value),
+        max_tokens: Number(document.getElementById("modelMaxTokens").value),
+        timeout: Number(document.getElementById("modelTimeout").value),
+        note: document.getElementById("modelNote").value.trim(),
+        is_active: document.getElementById("modelActive").checked,
+        is_default: document.getElementById("modelDefault").checked
+    };
+}
+
+function saveManagedModel() {
+    const modelId = document.getElementById("modelConfigId").value;
+    fetch(modelId ? `/api/models/${encodeURIComponent(modelId)}` : "/api/models", {
+        method: modelId ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(modelFormPayload())
+    }).then(res => res.json()).then(data => {
+        if (!data.ok) throw new Error(data.message || "保存失败");
+        window.location.reload();
+    }).catch(error => showModelMessage(error.message, false));
+}
+
+function setManagedModel(modelId) {
+    fetch("/api/set-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: modelId }) })
+        .then(res => res.json()).then(data => { if (!data.ok) throw new Error("模型未启用或接入配置不完整"); window.location.reload(); })
+        .catch(error => showModelMessage(error.message, false));
+}
+
+function testManagedModel(modelId) {
+    showModelMessage("正在测试模型连接，请稍候…");
+    fetch(`/api/models/${encodeURIComponent(modelId)}/test`, { method: "POST" }).then(res => res.json()).then(data => {
+        if (!data.ok) throw new Error(data.message || "连接失败");
+        showModelMessage(data.message || "连接测试成功");
+    }).catch(error => showModelMessage(error.message, false));
+}
+
+function fetchRemoteModels() {
+    const payload = modelFormPayload();
+    showModelMessage("正在从目标服务获取模型列表…");
+    fetch("/api/models/fetch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+        .then(res => res.json()).then(data => {
+            if (!data.ok) throw new Error(data.message || "获取模型失败");
+            const options = document.getElementById("remoteModelOptions");
+            options.replaceChildren(...data.models.map(model => {
+                const option = document.createElement("option");
+                option.value = String(model);
+                return option;
+            }));
+            if (data.models.length) document.getElementById("modelIdentifier").value = data.models[0];
+            showModelMessage(`已获取 ${data.models.length} 个模型`);
+        }).catch(error => showModelMessage(error.message, false));
+}
+
+function deleteManagedModel(modelId) {
+    if (!window.confirm(uiText("确定删除该 LLM 配置吗？"))) return;
+    fetch(`/api/models/${encodeURIComponent(modelId)}`, { method: "DELETE" }).then(res => res.json()).then(data => {
+        if (!data.ok) throw new Error(data.message || "删除失败");
+        window.location.reload();
+    }).catch(error => showModelMessage(error.message, false));
+}
+</script>
+{% endblock %}

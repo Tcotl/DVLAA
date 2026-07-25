@@ -1,0 +1,9 @@
+accelerate>=1.14.0,<2.0
+flask==3.0.0
+huggingface-hub>=1.5.0,<2.0
+numpy>=1.26.0,<3.0
+openai>=1.0.0,<3.0
+pillow>=10.0.0
+safetensors>=0.8.0
+torchvision==0.20.1
+transformers>=5.14.1,<6.0

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - {{ agent_intro.code }} 漏洞介绍{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container dvlaa-challenge-page intro-page">
+    <main class="dvlaa-main">
+        <section class="panel-card challenge-hero-card">
+            <div class="panel-header challenge-hero-header">
+                <div class="challenge-hero-headline">
+                    <span class="badge-tag agent">{{ agent_intro.code }}</span>
+                    <span class="challenge-hero-section-title">Agent 应用安全 Top 10 · 漏洞风险理论</span>
+                </div>
+                <div class="challenge-hero-actions">
+                    {% if previous_agent %}<a href="/agent/{{ previous_agent.id }}" class="btn-dv btn-dv-sm">上一类</a>{% endif %}
+                    {% if next_agent %}<a href="/agent/{{ next_agent.id }}" class="btn-dv btn-dv-sm">下一类</a>{% endif %}
+                    <a href="/" class="btn-dv btn-dv-sm btn-dv-danger">返回首页</a>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="challenge-hero-main">
+                    <div class="challenge-hero-badges">
+                        <span class="badge-tag agent">{{ agent_intro.code }}</span>
+                        <span class="badge-tag solved">1 个题目入口</span>
+                        <span class="badge-tag medium">先学理论再答题</span>
+                    </div>
+                    <h1 class="challenge-hero-title">{{ agent_courseware.title or (agent_intro.code ~ ' ' ~ agent_intro.name) }}</h1>
+                    <p class="challenge-hero-desc">{{ agent_courseware.summary or agent_help.vulnerability_principle or agent_intro.description }}</p>
+                    <div class="challenge-scenario-summary">
+                        <section class="challenge-scenario-block background">
+                            <div class="challenge-scenario-label"><span>01</span><strong>理论定义</strong></div>
+                            <p>{{ agent_courseware.summary or agent_intro.description }}</p>
+                        </section>
+                        <section class="challenge-scenario-block objective">
+                            <div class="challenge-scenario-label"><span>02</span><strong>风险边界</strong></div>
+                            <p>{{ agent_courseware.risk or agent_intro.objective }}</p>
+                        </section>
+                    </div>
+                    <div class="challenge-scenario-summary">
+                        <section class="challenge-scenario-block background">
+                            <div class="challenge-scenario-label"><span>03</span><strong>案例映射</strong></div>
+                            <p>{{ agent_courseware.case or agent_overview }}</p>
+                        </section>
+                        <section class="challenge-scenario-block objective">
+                            <div class="challenge-scenario-label"><span>04</span><strong>本地验证边界</strong></div>
+                            <p>{{ agent_intro.objective }}</p>
+                        </section>
+                    </div>
+                    <div class="challenge-hero-meta">
+                        <div><strong>分类:</strong> Agent 应用安全 Top 10</div>
+                        <div><strong>编号:</strong> {{ agent_intro.code }}</div>
+                        <div><strong>答题入口:</strong> 1 个</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel-card dashboard-matrix-card">
+            <div class="panel-header dashboard-matrix-header">
+                <div>
+                    <span>[题目入口] {{ agent_intro.code }} 对应题目</span>
+                    <small>阅读漏洞风险理论后，点击对应题目进入答题页面。</small>
+                </div>
+            </div>
+            <div class="panel-body dashboard-matrix-body">
+                <div class="dashboard-grid intro-card-grid">
+                    <article class="challenge-card" data-name="{{ agent_intro.code }} {{ agent_intro.name }} {{ agent_intro.target }} {{ agent_intro.description }}" data-track="agent">
+                        <div>
+                            <div class="card-head">
+                                <span class="badge-tag agent">{{ agent_intro.code }}</span>
+                                <span class="badge-tag {% if agent_intro.difficulty == '初级' %}basic{% elif agent_intro.difficulty == '中级' %}medium{% else %}hard{% endif %}">{{ agent_intro.difficulty }}</span>
+                            </div>
+                            <div class="card-title">{{ agent_intro.code }} {{ agent_intro.name }}</div>
+                            <div class="card-desc"><strong>理论概要：</strong>{{ agent_courseware.summary or agent_intro.description }}</div>
+                            <div class="card-desc"><strong>本地场景：</strong>{{ agent_intro.description }}</div>
+                            <div class="card-desc"><strong>目标系统：</strong>{{ agent_intro.target }}；<strong>Agent 身份：</strong>{{ agent_intro.role }}</div>
+                            {% if agent_intro.hint %}<div class="card-desc"><strong>起始线索：</strong>{{ agent_intro.hint }}</div>{% endif %}
+                            <div class="intro-tool-list" aria-label="可用工具">
+                                {% for tool in agent_intro.tools %}<code>{{ tool.name }}</code>{% endfor %}
+                            </div>
+                        </div>
+                        <div class="card-footer-pm">
+                            <span class="difficulty-meta">Agent 工具链验证题</span>
+                            <a href="/agent-challenge/{{ agent_intro.id }}" class="btn-dv btn-dv-primary btn-dv-sm">进入答题页面</a>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}

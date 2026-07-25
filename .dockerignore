@@ -1,0 +1,17 @@
+.git/
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.pytest_cache/
+.env
+.env.example
+.venv/
+venv/
+qwen-model/
+st-model/
+data/
+uploads/
+tmp/
+.level6_secret_flag.txt

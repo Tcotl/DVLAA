@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - {{ agent_challenge.code }} {{ agent_challenge.name }}{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container dvlaa-challenge-page">
+    <main class="dvlaa-main">
+        <section class="panel-card challenge-hero-card">
+            <div class="panel-header challenge-hero-header">
+                <div class="challenge-hero-headline">
+                    <span class="badge-tag agent">{{ agent_challenge.code }}</span>
+                    <span class="challenge-hero-section-title">Agent 应用安全 Top 10 · 当前题目</span>
+                </div>
+                <div class="challenge-hero-actions">
+                    {% if previous_agent %}<a href="/agent-challenge/{{ previous_agent.id }}" class="btn-dv btn-dv-sm">上一题</a>{% endif %}
+                    {% if next_agent %}<a href="/agent-challenge/{{ next_agent.id }}" class="btn-dv btn-dv-sm">下一题</a>{% endif %}
+                    <a href="/" class="btn-dv btn-dv-sm btn-dv-danger">返回首页</a>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <div class="challenge-hero-grid">
+                    <section class="challenge-hero-main">
+                        <div class="challenge-hero-badges">
+                            <span class="badge-tag agent">{{ agent_challenge.code }}</span>
+                            <span class="badge-tag {% if agent_challenge.difficulty == '初级' %}basic{% elif agent_challenge.difficulty == '中级' %}medium{% else %}hard{% endif %}">{{ agent_challenge.difficulty }}</span>
+                            <span class="badge-tag solved">关卡 {{ agent_challenge.id }}</span>
+                        </div>
+
+                        <h1 class="challenge-hero-title">{{ agent_challenge.name }}</h1>
+
+                        <div class="challenge-scenario-summary">
+                            <section class="challenge-scenario-block background">
+                                <div class="challenge-scenario-label"><span>01</span><strong>事件背景</strong></div>
+                                <p>{{ agent_challenge.description|replace('事件背景：', '') }}</p>
+                            </section>
+                            <section class="challenge-scenario-block objective">
+                                <div class="challenge-scenario-label"><span>02</span><strong>任务目标</strong></div>
+                                <p>{{ agent_challenge.objective }}</p>
+                            </section>
+                        </div>
+
+                        <div class="challenge-subnav-panel">
+                            <div class="challenge-subnav-title">
+                                <span>同类题目</span>
+                                <small>横向滑动查看更多</small>
+                            </div>
+                            <div class="challenge-subnav-grid" aria-label="Agent 应用安全题横向导航">
+                                {% for item in agent_challenges %}
+                                <a href="/agent-challenge/{{ item.id }}" class="challenge-subnav-card {% if item.id == agent_challenge.id %}active{% endif %}">
+                                    <div class="challenge-subnav-card-top">
+                                        <span class="challenge-subnav-index">{{ item.code }}</span>
+                                        <span class="badge-tag {% if item.difficulty == '初级' %}basic{% elif item.difficulty == '中级' %}medium{% else %}hard{% endif %}">{{ item.difficulty }}</span>
+                                    </div>
+                                    <div class="challenge-subnav-name">{{ item.name }}</div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="challenge-hero-meta">
+                            <div><strong>题目总数:</strong> {{ agent_challenges|length }} 个场景</div>
+                            <div><strong>目标系统:</strong> {{ agent_challenge.target }}</div>
+                            <div><strong>Agent 身份:</strong> {{ agent_challenge.role }}</div>
+                        </div>
+
+                        <div class="agent-inline-mission">
+                            <div class="agent-inline-mission-header">
+                                <div>
+                                    <strong>攻击链任务</strong>
+                                    <span>按顺序完成工具调用，真实推进本地状态机</span>
+                                </div>
+                                <span class="badge-tag agent">三阶段状态校验</span>
+                            </div>
+                            <p class="agent-mission-objective">{{ agent_challenge.objective }}</p>
+                            <div class="agent-progress-head"><span>攻击链进度</span><strong id="agentProgressText">0 / 3</strong></div>
+                            <div class="agent-progress-track"><span id="agentProgressBar" style="width: 0%;"></span></div>
+                            <p class="agent-start-hint"><strong>起始线索</strong>{{ agent_challenge.hint }}</p>
+                            <div class="agent-inline-tools">
+                                <div class="agent-inline-tools-title"><strong>可用工具</strong><code>/tools</code></div>
+                                <div class="agent-tools-list">
+                                    {% for tool in agent_challenge.tools %}
+                                    <div class="agent-tool-row"><code>{{ tool.name }}</code><span>{{ tool.description }}</span></div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="challenge-inline-flag">
+                            <div class="challenge-inline-flag-header">
+                                <div>
+                                    <strong>本题 Flag 验证</strong>
+                                    <span>{{ agent_challenge.code }} · 获取 Flag 后在此提交</span>
+                                </div>
+                                <span class="badge-tag solved">本题专属提交位</span>
+                            </div>
+                            <form id="submitFlagForm" data-track="agent" data-agent-id="{{ agent_challenge.id }}" onsubmit="event.preventDefault(); submitFlag();">
+                                <div class="challenge-flag-grid">
+                                    <div class="challenge-flag-input-wrap">
+                                        <label for="flagInput">FLAG 令牌值</label>
+                                        <input type="text" id="flagInput" class="input-dv" placeholder="flag{...}">
+                                    </div>
+                                    <button type="submit" class="btn-dv btn-dv-primary btn-dv-success challenge-flag-submit">校验本题 Flag</button>
+                                </div>
+                            </form>
+                            <div id="flagResultMsg" class="challenge-flag-result" style="display: none;"></div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </section>
+
+        <div class="terminal-window dv-assistant-chat-shell">
+            <div class="terminal-header dv-assistant-chat-header">
+                <div class="terminal-title dv-assistant-chat-title">
+                    <span class="status-dot"></span>
+                    <div>
+                        <span>AI 助手 · Agent 攻防交互终端</span>
+                        <small>{{ agent_challenge.code }} · {{ agent_challenge.name }} · 本地场景执行器</small>
+                    </div>
+                </div>
+                <div class="terminal-controls dv-assistant-chat-actions">
+                    <button type="button" onclick="openAgentWriteup({{ agent_challenge.id }}, '{{ agent_challenge.code }}')" class="btn-dv btn-dv-sm btn-dv-primary">WP 题解</button>
+                    <button type="button" onclick="openAgentSource({{ agent_challenge.id }})" class="btn-dv btn-dv-sm btn-dv-primary">查看提示词与源码</button>
+                    <button onclick="resetAgentChat({{ agent_challenge.id }})" class="btn-dv btn-dv-sm btn-dv-danger">重置对话</button>
+                </div>
+            </div>
+
+            <div class="terminal-body dv-assistant-message-area" id="chatMessages">
+                <div class="chat-message-row system">
+                    <div class="chat-bubble system-alert system-ready-card">
+                        <div class="system-ready-status">
+                            <span class="status-dot"></span>
+                            <span>系统就绪</span>
+                        </div>
+                        <div class="system-ready-content">
+                            <div class="system-ready-title">{{ agent_challenge.code }} 攻防环境已准备</div>
+                            <p>输入 <code>/tools</code> 查看能力清单，使用 <code>/tool 工具名 key=value</code> 调用工具，并按攻击链推进获取本题 Flag。</p>
+                            <div class="system-ready-meta">
+                                <span>题目：{{ agent_challenge.name }}</span>
+                                <span>Agent：{{ agent_challenge.role }}</span>
+                                <span>状态：等待输入</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="terminal-footer dv-assistant-composer-wrap">
+                <div class="dv-assistant-composer">
+                    <div class="dv-assistant-context-console">
+                        <span class="dv-assistant-tool-chip is-active">{{ agent_challenge.code }}</span>
+                        <span class="dv-assistant-tool-chip">Shift+Enter 换行</span>
+                        <span class="dv-assistant-tool-chip">Enter 发送</span>
+                    </div>
+                    <div class="dv-assistant-composer-main">
+                        <textarea id="userInputArea" class="input-dv dv-assistant-composer-input" rows="1" placeholder="输入 Agent 指令或攻击链 Payload..."></textarea>
+                        <button id="sendBtn" onclick="sendAgentMessage({{ agent_challenge.id }})" class="btn-dv btn-dv-primary dv-assistant-send-button">发送</button>
+                    </div>
+                    <div class="dv-assistant-composer-tools">
+                        <p class="dv-assistant-composer-hint">提示：Agent 场景必须按工具链顺序推进，输入 /state 可查看当前进度。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-card" id="inspectorCard" style="display: none;">
+            <div class="panel-header">
+                <span>[审计面板] Agent 工具调用与场景状态</span>
+            </div>
+            <pre class="panel-body agent-inspector-content" id="inspectorContent">暂无审计数据</pre>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}<script>window.DVLAA_CONTEXT = { track: "agent", id: {{ agent_challenge.id }} };</script>{% endblock %}

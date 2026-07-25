@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - {{ challenge_family.owasp_id }} 漏洞介绍{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container dvlaa-challenge-page intro-page">
+    <main class="dvlaa-main">
+        <section class="panel-card challenge-hero-card">
+            <div class="panel-header challenge-hero-header">
+                <div class="challenge-hero-headline">
+                    <span class="badge-tag owasp">{{ challenge_family.owasp_id }}</span>
+                    <span class="challenge-hero-section-title">OWASP LLM Top 10 · 漏洞介绍页面</span>
+                </div>
+                <div class="challenge-hero-actions">
+                    {% if previous_level %}<a href="/challenge/{{ previous_level }}" class="btn-dv btn-dv-sm">上一类</a>{% endif %}
+                    {% if next_level %}<a href="/challenge/{{ next_level }}" class="btn-dv btn-dv-sm">下一类</a>{% endif %}
+                    <a href="/" class="btn-dv btn-dv-sm btn-dv-danger">返回首页</a>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="challenge-hero-main">
+                    <div class="challenge-hero-badges">
+                        <span class="badge-tag owasp">{{ challenge_family.owasp_id }}</span>
+                        <span class="badge-tag solved">{{ level_challenges|length }} 个子题入口</span>
+                        <span class="badge-tag medium">先学原理再答题</span>
+                    </div>
+                    <h1 class="challenge-hero-title">{{ courseware.title or (challenge_family.owasp_id ~ ' ' ~ challenge_family.name) }}</h1>
+                    <p class="challenge-hero-desc">{{ courseware.summary or challenge_family.description }}</p>
+                    <div class="challenge-scenario-summary">
+                        <section class="challenge-scenario-block background">
+                            <div class="challenge-scenario-label"><span>01</span><strong>漏洞解释</strong></div>
+                            <p>{{ courseware.summary or challenge_family.description }}</p>
+                        </section>
+                        <section class="challenge-scenario-block objective">
+                            <div class="challenge-scenario-label"><span>02</span><strong>风险边界</strong></div>
+                            <p>{{ courseware.risk or '本类题目围绕模型上下文、系统提示词、工具调用和后置判定路径构造真实交互链。' }}</p>
+                        </section>
+                    </div>
+                    <div class="challenge-hero-meta">
+                        <div><strong>分类:</strong> OWASP LLM Top 10</div>
+                        <div><strong>编号:</strong> {{ challenge_family.owasp_id }}</div>
+                        <div><strong>答题入口:</strong> {{ level_challenges|length }} 个</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel-card dashboard-matrix-card">
+            <div class="panel-header dashboard-matrix-header">
+                <div>
+                    <span>[题目入口] {{ challenge_family.owasp_id }} 对应子题</span>
+                    <small>阅读漏洞解释后，点击对应题目进入答题页面。</small>
+                </div>
+            </div>
+            <div class="panel-body dashboard-matrix-body">
+                <div class="dashboard-grid intro-card-grid">
+                    {% for ch in level_challenges %}
+                    <article class="challenge-card" data-name="{{ ch.name }} {{ ch.sub_name }} {{ ch.owasp_id }} {{ ch.level }}.{{ ch.sub }}" data-track="owasp">
+                        <div>
+                            <div class="card-head">
+                                <span class="badge-tag owasp">{{ ch.owasp_id }}</span>
+                                {% if ch.difficulty == '初级' or 'BASIC' in ch.difficulty or 'EASY' in ch.difficulty %}
+                                    <span class="badge-tag basic">初级</span>
+                                {% elif ch.difficulty == '中级' or 'MEDIUM' in ch.difficulty %}
+                                    <span class="badge-tag medium">中级</span>
+                                {% else %}
+                                    <span class="badge-tag hard">高级</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-title">关卡 {{ ch.level }}.{{ ch.sub }} {{ ch.sub_name or ch.name }}</div>
+                            <div class="card-desc">{{ ch.description }}</div>
+                            {% if ch.hint %}<div class="card-desc"><strong>起始线索：</strong>{{ ch.hint }}</div>{% endif %}
+                        </div>
+                        <div class="card-footer-pm">
+                            <span class="difficulty-meta">真实模型交互题</span>
+                            <a href="/challenge/{{ ch.level }}/{{ ch.sub }}" class="btn-dv btn-dv-primary btn-dv-sm">进入答题页面</a>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        {% if extended_for_level %}
+        <section class="panel-card dashboard-matrix-card">
+            <div class="panel-header dashboard-matrix-header">
+                <div>
+                    <span>[综合题入口] {{ challenge_family.owasp_id }} 关联综合攻防题</span>
+                    <small>综合题已按漏洞类型归类到对应 OWASP 入口。</small>
+                </div>
+            </div>
+            <div class="panel-body dashboard-matrix-body">
+                <div class="dashboard-grid intro-card-grid">
+                    {% for ch in extended_for_level %}
+                    <article class="challenge-card" data-name="{{ ch.code }} {{ ch.name }} {{ ch.category }} {{ ch.description }}" data-track="extended">
+                        <div>
+                            <div class="card-head">
+                                <span class="badge-tag solved">{{ ch.code }}</span>
+                                <span class="badge-tag owasp">{{ ch.category }}</span>
+                            </div>
+                            <div class="card-title">{{ ch.name }}</div>
+                            <div class="card-desc">{{ ch.description }}</div>
+                            <div class="card-desc"><strong>归类依据：</strong>{{ ch.category }} · {{ ch.objective }}</div>
+                        </div>
+                        <div class="card-footer-pm">
+                            <div class="difficulty-meta"><span>难度：</span>
+                                {% if ch.difficulty == '初级' %}<span class="badge-tag basic">初级</span>
+                                {% elif ch.difficulty == '中级' %}<span class="badge-tag medium">中级</span>
+                                {% else %}<span class="badge-tag hard">高级</span>{% endif %}
+                            </div>
+                            <a href="/ai-challenge/{{ ch.id }}" class="btn-dv btn-dv-primary btn-dv-sm">进入综合题</a>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

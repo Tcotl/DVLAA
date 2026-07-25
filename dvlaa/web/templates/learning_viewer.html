@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - {{ learning_document.title }}{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container learning-viewer-page">
+    <main class="dvlaa-main">
+        <section class="panel-card learning-viewer-shell">
+            <div class="panel-header learning-viewer-header">
+                <div class="learning-viewer-title">
+                    <span class="badge-tag {% if learning_document.category == 'Agent 安全' %}agent{% elif learning_document.category == 'LLM 安全' %}owasp{% else %}solved{% endif %}">{{ learning_document.category }}</span>
+                    <div>
+                        <strong>{{ learning_document.title }}</strong>
+                        <small>{{ 'PDF 文档' if learning_document.type == 'pdf' else 'Markdown 文档' }} · {{ '系统内置' if learning_document.builtin else learning_document.original_name }}</small>
+                    </div>
+                </div>
+                <a href="/learning" class="btn-dv btn-dv-sm">返回学习目录</a>
+            </div>
+            <div class="panel-body learning-reader-body">
+                {% if learning_document.type == 'pdf' %}
+                <iframe class="learning-pdf-frame" src="/learning/file/{{ learning_document.id }}#toolbar=1&navpanes=1" title="{{ learning_document.title }}"></iframe>
+                {% else %}
+                <article class="learning-markdown-reader">{{ rendered_markdown|safe }}</article>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}
