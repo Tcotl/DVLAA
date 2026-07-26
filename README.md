@@ -45,6 +45,7 @@ DVLAA 是一个本地化的大模型与智能体应用安全训练平台。系�
 - **43 道本地题目**：24 道 OWASP LLM 子题、10 道 Agent 场景、9 道综合攻防题。
 - **真实交互式 Payload 验证**：题目通过模型响应、工具调用、状态机、知识库同步或多轮上下文推进，不依赖前端硬规则。
 - **统一答题页风格**：LLM、Agent、综合题使用统一的事件背景、任务目标、同类题导航、终端交互和 Flag 验证布局。
+- **在线训练转接**：在线 AI 安全训练入口已接入 Prompt Airlines，提供五关中文题面导引与系统内转接真实交互。
 - **源码与提示词查看器**：题目页可查看系统提示词、运行配置与核心实现，运行时随机 Flag 会被占位符替换。
 - **模型管理后台**：支持本地模型、Ollama、硅基流动和 OpenAI-Compatible 配置，API Key 掩码展示。
 - **双语与主题切换**：顶部导航栏提供深色/亮色主题切换和中英文切换，偏好会保存在浏览器本地。
@@ -129,6 +130,7 @@ DVLAA 采用单体 Flask 应用组织运行时能力：
 | OWASP LLM Top 10 | 24 | 提示词注入、敏感信息泄露、供应链、投毒、输出处理、过度代理、系统提示词泄露、向量检索弱点、幻觉、资源消耗 |
 | Agent 应用安全 Top 10 | 10 | 目标劫持、工具滥用、身份权限、供应链、代码执行、记忆污染、Agent 通信、级联故障、人机信任、失控智能体 |
 | 综合攻防题 | 9 | 提示词覆盖、系统提示词提取、RAG 投毒、上下文替换、多轮升级、角色漂移、策略投毒、链式利用、数据边界侵蚀 |
+| 在线 AI 安全训练 | 3 个入口 | Prompt Airlines 中文挑战转接、提示词防护闯关、提示词红队挑战平台 |
 
 ---
 
@@ -231,6 +233,7 @@ python -m dvlaa
 - **模型管理**：http://localhost:5080/models
 - **理论学习**：http://localhost:5080/learning
 - **互联网 AI 靶场导航**：http://localhost:5080/internet-ranges
+- **Prompt Airlines 中文训练**：http://localhost:5080/internet-ranges/promptairlines
 
 ---
 
@@ -241,6 +244,7 @@ python -m dvlaa
 | LLM 漏洞训练 | OWASP LLM Top 10 理论介绍、子题答题、WP、源码查看 | `/challenge/<level>` |
 | Agent 场景训练 | Agent 应用安全 Top 10 理论介绍、工具链状态机、审计轨迹 | `/agent/<id>` |
 | 综合攻防题 | 按漏洞类型归档到 LLM Top 10 的多阶段综合题 | `/challenge/<level>` |
+| 在线 AI 安全训练 | Prompt Airlines 中文题面、系统内转接交互、外部靶场导航 | `/internet-ranges` |
 | 模型管理 | 本地模型、Ollama、硅基流动、自定义 OpenAI-Compatible 配置 | `/models` |
 | 理论学习 | 内置中文资料、Markdown/PDF 上传与阅读 | `/learning` |
 | 源码查看 | 系统提示词、运行配置、核心实现、Flag 占位展示 | 答题页按钮 |

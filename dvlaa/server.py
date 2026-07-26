@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import http.cookiejar
 import inspect
 import json
 import logging
@@ -12,6 +13,10 @@ import re
 import shlex
 import sys
 import threading
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from functools import lru_cache
 from pathlib import Path
 
@@ -27,7 +32,10 @@ from .modules import learning_library
 from .modules import inspect_util
 from .content.agent_challenges import AGENT_CHALLENGES, AGENT_FLAGS, SCENARIO_STEPS, get_agent_challenge, help_content as agent_help_content, process_agent_message
 from .content.agent_courseware import AGENT_TOP10_COURSEWARE, AGENT_TOP10_OVERVIEW
-from .content.internet_ranges import INTERNET_RANGES
+from .content.internet_ranges import (
+    INTERNET_RANGES, PROMPT_AIRLINES_CHALLENGES, PROMPT_AIRLINES_UI_TERMS,
+    PROMPT_AIRLINES_URL,
+)
 from .content.extended_challenges import (
     EXTENDED_CHALLENGES, EXTENDED_FLAGS,
     category_levels, challenges_for_owasp_level, get_extended_challenge,
@@ -55,13 +63,19 @@ app = Flask(
 app.secret_key = SECRET_KEY
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
-ASSET_VERSION = "20260726.01"
+ASSET_VERSION = "20260726.03"
 APP_VERSION = "1.0.0"
 
 UPLOAD_FOLDER = UPLOAD_DIR
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 app.config['MAX_CONTENT_LENGTH'] = 22 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'txt'}
+
+PROMPT_AIRLINES_PROXY_PREFIX = "/internet-ranges/promptairlines/live"
+PROMPT_AIRLINES_PROXY_TIMEOUT = 35
+PROMPT_AIRLINES_SESSION_TTL = 4 * 60 * 60
+_promptairlines_sessions: dict[str, dict[str, object]] = {}
+_promptairlines_sessions_lock = threading.Lock()
 
 AGENT_NAME_EN = {
     1: "Agent Goal Hijack",
@@ -232,6 +246,19 @@ def _build_i18n_catalog() -> dict[str, dict[str, str]]:
         for focus, focus_en in zip(item.get("focus", []), range_en.get("focus", [])):
             _add_translation(phrases, focus, focus_en)
 
+    for challenge in PROMPT_AIRLINES_CHALLENGES:
+        _add_translation(phrases, challenge.get("title"), challenge.get("title_en"))
+        _add_translation(phrases, challenge.get("category"), challenge.get("category_en"))
+        _add_translation(phrases, challenge.get("prompt_text_zh"), challenge.get("prompt_text_en"))
+        _add_translation(phrases, challenge.get("objective"), challenge.get("objective_en"))
+        _add_translation(phrases, challenge.get("description"), challenge.get("description_en"))
+        _add_translation(phrases, challenge.get("risk"), challenge.get("risk_en"))
+        _add_translation(phrases, f"第 {challenge.get('id')}/5 关", f"Challenge {challenge.get('id')}/5")
+        for tip, tip_en in zip(challenge.get("tips", []), challenge.get("tips_en", [])):
+            _add_translation(phrases, tip, tip_en)
+    for term in PROMPT_AIRLINES_UI_TERMS:
+        _add_translation(phrases, term.get("zh"), term.get("en"))
+
     return {"phrases": phrases}
 
 
@@ -259,6 +286,188 @@ def favicon():
 def health_check():
     """Container and load-balancer health endpoint."""
     return jsonify({"ok": True, "service": "dvlaa", "version": APP_VERSION})
+
+
+def _browser_session_id() -> str:
+    """Return a stable browser-session id for local state and proxied ranges."""
+    sid = session.get("_sid")
+    if sid is None:
+        import uuid
+        sid = str(uuid.uuid4())[:12]
+        session["_sid"] = sid
+    return str(sid)
+
+
+def _promptairlines_session_bundle() -> dict[str, object]:
+    """Create or reuse the per-browser Prompt Airlines proxy session."""
+    sid = _browser_session_id()
+    now = time.time()
+    with _promptairlines_sessions_lock:
+        stale = [
+            key for key, value in _promptairlines_sessions.items()
+            if now - float(value.get("last_seen", 0)) > PROMPT_AIRLINES_SESSION_TTL
+        ]
+        for key in stale:
+            _promptairlines_sessions.pop(key, None)
+
+        bundle = _promptairlines_sessions.get(sid)
+        if bundle is None:
+            cookie_jar = http.cookiejar.CookieJar()
+            opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookie_jar))
+            bundle = {"opener": opener, "lock": threading.Lock(), "last_seen": now}
+            _promptairlines_sessions[sid] = bundle
+        else:
+            bundle["last_seen"] = now
+        return bundle
+
+
+def _promptairlines_target_url(remote_path: str) -> str:
+    clean_path = (remote_path or "").lstrip("/")
+    target_url = urllib.parse.urljoin(PROMPT_AIRLINES_URL, clean_path)
+    if request.query_string:
+        target_url = f"{target_url}?{request.query_string.decode('utf-8', errors='ignore')}"
+    return target_url
+
+
+def _rewrite_promptairlines_location(value: str) -> str:
+    if value.startswith(PROMPT_AIRLINES_URL):
+        return PROMPT_AIRLINES_PROXY_PREFIX + "/" + value.removeprefix(PROMPT_AIRLINES_URL).lstrip("/")
+    if value.startswith("/"):
+        return PROMPT_AIRLINES_PROXY_PREFIX + value
+    return value
+
+
+def _localized_promptairlines_challenge(body: bytes, remote_path: str, content_type: str) -> bytes | None:
+    """Translate the original /challenge JSON so learners see Chinese task text in-system."""
+    if remote_path.strip("/") != "challenge" or "application/json" not in content_type.lower():
+        return None
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if payload.get("finished"):
+        return None
+    challenge_id = payload.get("id")
+    if not isinstance(challenge_id, int) or challenge_id < 0 or challenge_id >= len(PROMPT_AIRLINES_CHALLENGES):
+        return None
+    challenge = PROMPT_AIRLINES_CHALLENGES[challenge_id]
+    payload["title"] = challenge.get("title", payload.get("title", ""))
+    payload["description"] = challenge.get("prompt_html_zh") or challenge.get("prompt_text_zh") or payload.get("description", "")
+    return json.dumps(payload, ensure_ascii=False).encode("utf-8")
+
+
+def _rewrite_promptairlines_body(body: bytes, remote_path: str, content_type: str) -> bytes:
+    localized = _localized_promptairlines_challenge(body, remote_path, content_type)
+    if localized is not None:
+        return localized
+
+    lower_type = content_type.lower()
+    if not any(marker in lower_type for marker in ("text/html", "javascript", "text/css")):
+        return body
+    charset_match = re.search(r"charset=([^;]+)", content_type, flags=re.IGNORECASE)
+    charset = charset_match.group(1).strip() if charset_match else "utf-8"
+    try:
+        text = body.decode(charset)
+    except (LookupError, UnicodeDecodeError):
+        text = body.decode("utf-8", errors="replace")
+
+    prefix = PROMPT_AIRLINES_PROXY_PREFIX
+    replacements = {
+        'href="/': f'href="{prefix}/',
+        "href='/": f"href='{prefix}/",
+        'src="/': f'src="{prefix}/',
+        "src='/": f"src='{prefix}/",
+        'action="/': f'action="{prefix}/',
+        "action='/": f"action='{prefix}/",
+        'url("/': f'url("{prefix}/',
+        "url('/": f"url('{prefix}/",
+        "url(/": f"url({prefix}/",
+        "fetch('/": f"fetch('{prefix}/",
+        'fetch("/': f'fetch("{prefix}/',
+        "fetchWithAuth('/": f"fetchWithAuth('{prefix}/",
+        'fetchWithAuth("/': f'fetchWithAuth("{prefix}/',
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+
+    ui_replacements = {
+        "Start the challenge": "开始挑战",
+        "Check Flag": "校验 Flag",
+        "Check flag": "校验 Flag",
+        "Next Challenge": "下一关",
+        "Reset Context": "重置上下文",
+        "Under The Hood": "幕后数据",
+        "Write a Reply": "输入回复",
+        "Claim your certificate": "领取证书",
+        "Claim Your Certificate": "领取证书",
+        "Leaderboard": "排行榜",
+        "Register/Login": "注册/登录",
+        "Congratulations you finished the game!": "恭喜，你已经完成全部挑战！",
+        "new context": "新上下文",
+        "Wrong flag": "Flag 不正确",
+        "Failed to submit the flag.": "Flag 提交失败。",
+    }
+    for old, new in ui_replacements.items():
+        text = text.replace(old, new)
+
+    text = text.replace(
+        '"Start challenge #" + String(currentChallenge + 1)',
+        '"开始第 " + String(currentChallenge + 1) + " 关"',
+    )
+    text = text.replace(
+        "<p>CHALLENGE ${challenge.id + 1}/5</p>",
+        "<p>第 ${challenge.id + 1}/5 关</p>",
+    )
+    return text.encode(charset if charset else "utf-8", errors="replace")
+
+
+def _proxy_promptairlines_response(remote_path: str):
+    """Proxy Prompt Airlines through DVLAA so the embedded challenge keeps a working session."""
+    target_url = _promptairlines_target_url(remote_path)
+    method = request.method.upper()
+    data = None if method in {"GET", "HEAD"} else request.get_data(cache=False)
+    excluded_request_headers = {
+        "accept-encoding", "connection", "content-length", "cookie", "host", "origin", "referer",
+    }
+    outbound_headers = {
+        key: value for key, value in request.headers.items()
+        if key.lower() not in excluded_request_headers
+    }
+    outbound_headers.setdefault("User-Agent", request.headers.get("User-Agent", "Mozilla/5.0"))
+    outbound = urllib.request.Request(target_url, data=data, headers=outbound_headers, method=method)
+
+    bundle = _promptairlines_session_bundle()
+    opener = bundle["opener"]
+    request_lock = bundle["lock"]
+    try:
+        with request_lock:
+            remote_response = opener.open(outbound, timeout=PROMPT_AIRLINES_PROXY_TIMEOUT)
+            body = remote_response.read()
+    except urllib.error.HTTPError as exc:
+        remote_response = exc
+        body = exc.read()
+    except urllib.error.URLError as exc:
+        logger.warning("Prompt Airlines proxy request failed for %s: %s", target_url, exc)
+        return jsonify({"ok": False, "message": f"Prompt Airlines 转接请求失败: {exc}"}), 502
+
+    content_type = remote_response.headers.get("Content-Type", "")
+    body = _rewrite_promptairlines_body(body, remote_path, content_type)
+    response = app.response_class(body, status=getattr(remote_response, "code", 200))
+
+    excluded_response_headers = {
+        "connection", "content-encoding", "content-length", "set-cookie", "transfer-encoding",
+    }
+    for key, value in remote_response.headers.items():
+        lower_key = key.lower()
+        if lower_key in excluded_response_headers:
+            continue
+        if lower_key == "location":
+            value = _rewrite_promptairlines_location(value)
+        response.headers[key] = value
+    if content_type:
+        response.headers["Content-Type"] = content_type
+    response.headers["X-DVLAA-Proxied-Range"] = "promptairlines"
+    return response
 
 
 # ── 加载 flags ──────────────────────────────────────────────
@@ -390,11 +599,7 @@ def get_challenge(level: int, sub: int = 1):
         instance.set_sub_level(sub)
         _challenge_instances[cache_key] = instance
 
-    sid = session.get("_sid")
-    if sid is None:
-        import uuid
-        sid = str(uuid.uuid4())[:12]
-        session["_sid"] = sid
+    sid = _browser_session_id()
     inst = _challenge_instances[cache_key]
     if hasattr(inst, 'set_session_id'):
         inst.set_session_id(sid)
@@ -546,7 +751,28 @@ def index():
 
 @app.route("/internet-ranges")
 def internet_ranges_page():
-    return render_template("internet_ranges.html", internet_ranges=INTERNET_RANGES)
+    focus_count = len({focus for item in INTERNET_RANGES for focus in item.get("focus", [])})
+    return render_template("internet_ranges.html", internet_ranges=INTERNET_RANGES, internet_focus_count=focus_count)
+
+
+@app.route("/internet-ranges/promptairlines")
+def promptairlines_training_page():
+    return render_template(
+        "promptairlines.html",
+        promptairlines_url=PROMPT_AIRLINES_URL,
+        promptairlines_embed_url=f"{PROMPT_AIRLINES_PROXY_PREFIX}/",
+        promptairlines_challenges=PROMPT_AIRLINES_CHALLENGES,
+        promptairlines_ui_terms=PROMPT_AIRLINES_UI_TERMS,
+    )
+
+
+@app.route("/internet-ranges/promptairlines/live", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"], defaults={"remote_path": ""})
+@app.route("/internet-ranges/promptairlines/live/", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"], defaults={"remote_path": ""})
+@app.route("/internet-ranges/promptairlines/live/<path:remote_path>", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"])
+def promptairlines_live_proxy(remote_path: str = ""):
+    if not remote_path and not request.path.endswith("/"):
+        return redirect(f"{PROMPT_AIRLINES_PROXY_PREFIX}/", code=308)
+    return _proxy_promptairlines_response(remote_path)
 
 
 @app.route("/models")

@@ -13,12 +13,12 @@
             <div class="panel-body internet-range-intro">
                 <div>
                     <h1>在线 AI 安全训练入口</h1>
-                    <p>查看各靶场的训练方向与交互方式，再选择进入对应的外部环境。外部站点会在新窗口打开，不影响当前本地靶场进度。</p>
+                    <p>查看各靶场的训练方向与交互方式，再选择进入对应环境。支持新窗口打开，也支持系统内转接训练，不影响当前本地靶场进度。</p>
                 </div>
                 <div class="internet-range-summary">
                     <span><strong>3</strong> 个训练平台</span>
-                    <span><strong>7</strong> 项核心能力</span>
-                    <span><strong>独立</strong> 外部会话</span>
+                    <span><strong>{{ internet_focus_count }}</strong> 项核心能力</span>
+                    <span><strong>独立</strong> 训练会话</span>
                 </div>
             </div>
         </section>
@@ -40,8 +40,13 @@
                     </dl>
                 </div>
                 <div class="internet-range-card-footer">
+                    {% if item.internal_url %}
+                    <span><span>系统内中文导引</span>{% if item.challenges_count %} · <span>{{ item.challenges_count }} 个挑战</span>{% endif %}</span>
+                    <a class="btn-dv btn-dv-primary" href="{{ item.internal_url }}">进入中文训练</a>
+                    {% else %}
                     <span>外部训练环境</span>
                     <a class="btn-dv btn-dv-primary" href="{{ item.url }}" target="_blank" rel="noopener noreferrer">打开外部靶场</a>
+                    {% endif %}
                 </div>
             </article>
             {% endfor %}

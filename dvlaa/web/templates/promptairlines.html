@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - Prompt Airlines 中文训练入口{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container internet-range-page promptairlines-page">
+    <main class="dvlaa-main">
+        <section class="panel-card promptairlines-header">
+            <div class="panel-header">
+                <div><span class="badge-tag agent">WEB02</span><span>Prompt Airlines 中文训练入口</span></div>
+                <span class="badge-tag medium">5 个挑战</span>
+            </div>
+            <div class="panel-body promptairlines-hero">
+                <div>
+                    <h1>Prompt Airlines 中文训练入口</h1>
+                    <p>五个挑战题面已经转换为中文导引，右侧通过 DVLAA 转接原站真实对话、提交 Flag 与证书流程。</p>
+                </div>
+                <div class="promptairlines-actions">
+                    <a class="btn-dv btn-dv-secondary" href="/internet-ranges">返回在线训练入口</a>
+                    <a class="btn-dv btn-dv-secondary" href="{{ promptairlines_url }}" target="_blank" rel="noopener noreferrer">打开原站新窗口</a>
+                    <button class="btn-dv btn-dv-primary" type="button" onclick="reloadPromptAirlinesFrame()">刷新嵌入页面</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="promptairlines-workspace" aria-label="Prompt Airlines 中文挑战与原站交互">
+            <aside class="promptairlines-guide panel-card">
+                <div class="panel-header">
+                    <div><span class="badge-tag basic">CN</span><span>中文挑战导引</span></div>
+                </div>
+                <div class="panel-body promptairlines-guide-body">
+                    <p class="promptairlines-guide-intro">按关卡阅读中文题面、攻击目标、风险原理和交互提示，再在右侧转接训练区完成真实提交。</p>
+                    <div class="promptairlines-guide-list">
+                        {% for challenge in promptairlines_challenges %}
+                        <article class="promptairlines-challenge-card">
+                            <div class="promptairlines-challenge-top">
+                                <span class="promptairlines-challenge-code">{{ challenge.code }}</span>
+                                <span class="badge-tag basic">第 {{ challenge.id }}/5 关</span>
+                            </div>
+                            <h2>{{ challenge.title }}</h2>
+                            <div class="promptairlines-category">{{ challenge.category }}</div>
+                            <p>{{ challenge.description }}</p>
+                            <dl class="promptairlines-challenge-detail">
+                                <div>
+                                    <dt>原站题面翻译</dt>
+                                    <dd>{{ challenge.prompt_text_zh }}</dd>
+                                </div>
+                                <div>
+                                    <dt>英文原文</dt>
+                                    <dd data-no-i18n>{{ challenge.prompt_text_en }}</dd>
+                                </div>
+                                <div>
+                                    <dt>训练目标</dt>
+                                    <dd>{{ challenge.objective }}</dd>
+                                </div>
+                                <div>
+                                    <dt>漏洞原理</dt>
+                                    <dd>{{ challenge.risk }}</dd>
+                                </div>
+                                <div>
+                                    <dt>交互提示</dt>
+                                    <dd>
+                                        <ul>
+                                            {% for tip in challenge.tips %}
+                                            <li>{{ tip }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </dd>
+                                </div>
+                            </dl>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            </aside>
+
+            <section class="promptairlines-frame-card panel-card">
+                <div class="panel-header promptairlines-frame-header">
+                    <div><span class="badge-tag agent">LIVE</span><span>DVLAA 转接训练区</span></div>
+                    <span>转接真实交互</span>
+                </div>
+                <div class="panel-body promptairlines-frame-body">
+                    <p class="promptairlines-proxy-note">通过 DVLAA 转接原站页面，保留真实对话、Flag 校验、下一关解锁和证书领取流程，并避免第三方 Cookie 限制影响内嵌进度。</p>
+                    <div class="promptairlines-workflow">
+                        <div>
+                            <h2>使用流程</h2>
+                            <ol>
+                                <li>先在左侧定位当前关卡的攻击目标。</li>
+                                <li>在右侧转接训练区开始挑战并与客服 AI 对话。</li>
+                                <li>把得到的 Flag 提交到转接页面的校验框，通过后继续下一关。</li>
+                            </ol>
+                        </div>
+                        <div class="promptairlines-terms">
+                            <h2>常见按钮中文对照</h2>
+                            <table>
+                                <thead><tr><th>原站按钮</th><th>中文含义</th></tr></thead>
+                                <tbody>
+                                    {% for term in promptairlines_ui_terms %}
+                                    <tr><td>{{ term.en }}</td><td>{{ term.zh }}</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="promptairlines-frame-shell">
+                        <div class="promptairlines-frame-toolbar">
+                            <span>{{ promptairlines_embed_url }}</span>
+                            <a href="{{ promptairlines_url }}" target="_blank" rel="noopener noreferrer">打开原站新窗口</a>
+                        </div>
+                        <iframe
+                            id="promptAirlinesFrame"
+                            class="promptairlines-frame"
+                            src="{{ promptairlines_embed_url }}"
+                            title="Prompt Airlines 在线挑战"
+                            loading="lazy"
+                            allow="clipboard-read; clipboard-write; fullscreen; payment"
+                            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+</div>
+<script>
+function reloadPromptAirlinesFrame() {
+    const frame = document.getElementById('promptAirlinesFrame');
+    if (frame) {
+        frame.src = frame.src;
+    }
+}
+</script>
+{% endblock %}

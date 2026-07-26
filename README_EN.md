@@ -44,6 +44,7 @@ Integrated attack-defense labs are classified under the corresponding LLM Top 10
 - **43 local labs**: 24 OWASP LLM sub-challenges, 10 Agent scenarios, and 9 integrated attack-defense labs.
 - **Real interactive payload validation**: Challenges are validated through model responses, tool calls, state machines, knowledge-base updates, or multi-turn context instead of frontend-only rules.
 - **Unified challenge pages**: LLM, Agent, and integrated labs share a consistent layout for background, objectives, sibling navigation, terminal interaction, and Flag verification.
+- **Online training proxy**: The Online AI Security Training entry now integrates Prompt Airlines with Chinese challenge briefs and in-system proxied live interaction.
 - **Source and prompt viewer**: Challenge pages expose system prompts, runtime configuration, and core implementation with runtime Flags replaced by placeholders.
 - **Model management**: Supports local models, Ollama, SiliconFlow, and OpenAI-compatible providers with masked API Key display.
 - **Bilingual UI and theme switching**: The top navigation bar provides Chinese/English and dark/light switches with browser-local preferences.
@@ -128,6 +129,7 @@ DVLAA is organized as a single Flask application:
 | OWASP LLM Top 10 | 24 | Prompt injection, sensitive information disclosure, supply chain, poisoning, output handling, excessive agency, system prompt leakage, vector retrieval weaknesses, hallucination, resource consumption |
 | Agent Application Security Top 10 | 10 | Goal hijacking, tool misuse, identity and privilege abuse, supply chain, code execution, memory poisoning, Agent communication, cascading failures, human-Agent trust, rogue agents |
 | Integrated Labs | 9 | Prompt override, system prompt extraction, RAG poisoning, context replacement, multi-turn escalation, persona hijacking, policy poisoning, chained exploitation, data boundary erosion |
+| Online AI Security Training | 3 entries | Prompt Airlines Chinese challenge proxy, prompt-guard challenges, prompt red-team platform |
 
 ---
 
@@ -229,6 +231,7 @@ Runtime model configuration is stored in `data/` or the Docker data volume. API 
 - **Model Management**: http://localhost:5080/models
 - **Learning Library**: http://localhost:5080/learning
 - **Internet AI Range Navigator**: http://localhost:5080/internet-ranges
+- **Prompt Airlines Chinese Training**: http://localhost:5080/internet-ranges/promptairlines
 
 ---
 
@@ -239,6 +242,7 @@ Runtime model configuration is stored in `data/` or the Docker data volume. API 
 | LLM security labs | OWASP LLM Top 10 theory, sub-challenges, writeups, source viewer | `/challenge/<level>` |
 | Agent scenario labs | Agent security Top 10 theory, tool-chain state machines, audit trails | `/agent/<id>` |
 | Integrated labs | Multi-stage labs classified under LLM Top 10 categories | `/challenge/<level>` |
+| Online AI security training | Prompt Airlines Chinese briefs, in-system proxied interaction, external range navigation | `/internet-ranges` |
 | Model management | Local models, Ollama, SiliconFlow, custom OpenAI-compatible providers | `/models` |
 | Learning library | Built-in materials, Markdown/PDF upload, online reading | `/learning` |
 | Source viewer | System prompts, runtime configuration, core implementation, Flag placeholders | Challenge page buttons |

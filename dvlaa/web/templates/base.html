@@ -109,7 +109,7 @@
                     <span data-i18n="internet_ranges">互联网 AI 靶场导航</span>
                     <span class="badge-tag agent" style="font-size: 0.55rem; padding: 0 0.25rem;">LINK</span>
                 </div>
-                <a href="/internet-ranges" class="dv-nav-item {% if request.path == '/internet-ranges' %}active{% endif %}" data-code="WEB" title="互联网 AI 靶场导航" data-i18n-title="internet_ranges">
+                <a href="/internet-ranges" class="dv-nav-item {% if request.path.startswith('/internet-ranges') %}active{% endif %}" data-code="WEB" title="互联网 AI 靶场导航" data-i18n-title="internet_ranges">
                     <span class="nav-label" data-i18n="online_ranges">在线靶场导航页</span>
                 </a>
             </div>
