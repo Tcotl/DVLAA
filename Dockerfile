@@ -28,8 +28,10 @@ RUN set -eux; \
     if [ "$arch" = "x86_64" ]; then \
         pip install --no-cache-dir --default-timeout=600 --retries=10 \
             -i https://pypi.tuna.tsinghua.edu.cn/simple \
-            --extra-index-url https://download.pytorch.org/whl/cpu \
-            "torch==2.5.1+cpu"; \
+            filelock typing-extensions networkx jinja2 fsspec sympy==1.13.1; \
+        pip install --no-cache-dir --default-timeout=600 --retries=10 --no-deps \
+            "https://download.pytorch.org/whl/cpu/torch-2.5.1%2Bcpu-cp311-cp311-linux_x86_64.whl" \
+            "https://download.pytorch.org/whl/cpu/torchvision-0.20.1%2Bcpu-cp311-cp311-linux_x86_64.whl"; \
     else \
         pip install --no-cache-dir --default-timeout=600 --retries=10 \
             -i https://pypi.org/simple "torch==2.5.1"; \
