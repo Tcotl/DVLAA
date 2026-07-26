@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}DVLAA - Prompt Airlines 中文训练入口{% endblock %}
+{% block title %}DVLAA - Prompt Airlines 训练{% endblock %}
 
 {% block body %}
 <div class="dvlaa-container internet-range-page promptairlines-page">
     <main class="dvlaa-main">
         <section class="panel-card promptairlines-header">
             <div class="panel-header">
-                <div><span class="badge-tag agent">WEB02</span><span>Prompt Airlines 中文训练入口</span></div>
+                <div><span class="badge-tag agent">WEB02</span><span>Prompt Airlines 训练</span></div>
                 <span class="badge-tag medium">5 个挑战</span>
             </div>
             <div class="panel-body promptairlines-hero">
                 <div>
-                    <h1>Prompt Airlines 中文训练入口</h1>
-                    <p>五个挑战题面已经转换为中文导引，右侧通过 DVLAA 转接原站真实对话、提交 Flag 与证书流程。</p>
+                    <h1>Prompt Airlines 训练</h1>
+                    <p>Prompt Airlines 靶场介绍：围绕航空客服 AI Agent 的五个在线挑战，覆盖系统提示词泄露、工具输出泄露、多模态提示词注入与业务流程绕过，学员可在系统内完成真实对话和 Flag 校验。</p>
                 </div>
                 <div class="promptairlines-actions">
                     <a class="btn-dv btn-dv-secondary" href="/internet-ranges">返回在线训练入口</a>
@@ -26,7 +26,7 @@
         <section class="promptairlines-workspace" aria-label="Prompt Airlines 中文挑战与原站交互">
             <aside class="promptairlines-guide panel-card">
                 <div class="panel-header">
-                    <div><span class="badge-tag basic">CN</span><span>中文挑战导引</span></div>
+                    <div><span class="badge-tag basic">CN</span><span>挑战指引</span></div>
                 </div>
                 <div class="panel-body promptairlines-guide-body">
                     <p class="promptairlines-guide-intro">按关卡阅读中文题面、攻击目标、风险原理和交互提示，再在右侧转接训练区完成真实提交。</p>
@@ -80,28 +80,6 @@
                     <span>转接真实交互</span>
                 </div>
                 <div class="panel-body promptairlines-frame-body">
-                    <p class="promptairlines-proxy-note">通过 DVLAA 转接原站页面，保留真实对话、Flag 校验、下一关解锁和证书领取流程，并避免第三方 Cookie 限制影响内嵌进度。</p>
-                    <div class="promptairlines-workflow">
-                        <div>
-                            <h2>使用流程</h2>
-                            <ol>
-                                <li>先在左侧定位当前关卡的攻击目标。</li>
-                                <li>在右侧转接训练区开始挑战并与客服 AI 对话。</li>
-                                <li>把得到的 Flag 提交到转接页面的校验框，通过后继续下一关。</li>
-                            </ol>
-                        </div>
-                        <div class="promptairlines-terms">
-                            <h2>常见按钮中文对照</h2>
-                            <table>
-                                <thead><tr><th>原站按钮</th><th>中文含义</th></tr></thead>
-                                <tbody>
-                                    {% for term in promptairlines_ui_terms %}
-                                    <tr><td>{{ term.en }}</td><td>{{ term.zh }}</td></tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
                     <div class="promptairlines-frame-shell">
                         <div class="promptairlines-frame-toolbar">
                             <span>{{ promptairlines_embed_url }}</span>

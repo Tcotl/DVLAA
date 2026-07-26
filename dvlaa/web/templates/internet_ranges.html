@@ -42,7 +42,7 @@
                 <div class="internet-range-card-footer">
                     {% if item.internal_url %}
                     <span><span>系统内中文导引</span>{% if item.challenges_count %} · <span>{{ item.challenges_count }} 个挑战</span>{% endif %}</span>
-                    <a class="btn-dv btn-dv-primary" href="{{ item.internal_url }}">进入中文训练</a>
+                    <a class="btn-dv btn-dv-primary" href="{{ item.internal_url }}">进入训练</a>
                     {% else %}
                     <span>外部训练环境</span>
                     <a class="btn-dv btn-dv-primary" href="{{ item.url }}" target="_blank" rel="noopener noreferrer">打开外部靶场</a>

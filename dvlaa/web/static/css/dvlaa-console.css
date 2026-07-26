@@ -715,6 +715,18 @@ html[data-theme="light"] .btn-dv:hover {
   justify-content: space-between;
 }
 
+
+.panel-header > div {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.panel-header > div > span:not(.badge-tag) {
+  min-width: 0;
+}
+
 .panel-body {
   padding: 0.85rem;
 }
