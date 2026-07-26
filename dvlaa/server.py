@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import http.cookiejar
 import inspect
 import json
@@ -63,8 +64,10 @@ app = Flask(
 app.secret_key = SECRET_KEY
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
-ASSET_VERSION = "20260726.05"
+ASSET_VERSION = "20260726.07"
 APP_VERSION = "1.0.0"
+ADMIN_USERNAME = os.environ.get("DVLAA_ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("DVLAA_ADMIN_PASSWORD", "DVLAA2026+")
 
 UPLOAD_FOLDER = UPLOAD_DIR
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
@@ -293,6 +296,80 @@ def favicon():
 def health_check():
     """Container and load-balancer health endpoint."""
     return jsonify({"ok": True, "service": "dvlaa", "version": APP_VERSION})
+
+
+def _is_authenticated() -> bool:
+    """Return whether the current browser session has passed the local admin login."""
+    return bool(session.get("authenticated")) and bool(session.get("username"))
+
+
+def _safe_next_path(value: str | None) -> str:
+    """Keep post-login redirects inside this DVLAA instance."""
+    candidate = str(value or "").strip()
+    if not candidate.startswith("/") or candidate.startswith("//"):
+        return "/"
+    return candidate
+
+
+@app.before_request
+def require_login():
+    """Protect the range behind an independent Flask session for every browser."""
+    public_paths = {"/favicon.ico", "/health", "/login", "/logout"}
+    if request.endpoint == "static" or request.path.startswith("/static/") or request.path in public_paths:
+        return None
+    if _is_authenticated():
+        return None
+    if request.path.startswith("/api/") or request.path.startswith("/internal/"):
+        return jsonify({"ok": False, "authenticated": False, "message": "请先登录靶场"}), 401
+    next_path = request.full_path.rstrip("?")
+    return redirect(url_for("login", next=_safe_next_path(next_path)))
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """Render the PentestManus-style login screen and authenticate the default admin."""
+    if request.method == "GET":
+        if _is_authenticated():
+            return redirect(_safe_next_path(request.args.get("next")))
+        return render_template(
+            "login.html",
+            asset_version=ASSET_VERSION,
+            next_path=_safe_next_path(request.args.get("next")),
+        )
+
+    payload = request.get_json(silent=True) or request.form
+    username = str(payload.get("username", "")).strip()
+    password = str(payload.get("password", ""))
+    valid = hmac.compare_digest(username, ADMIN_USERNAME) and hmac.compare_digest(password, ADMIN_PASSWORD)
+    if not valid:
+        message = "用户名或密码错误"
+        if request.is_json:
+            return jsonify({"ok": False, "authenticated": False, "message": message}), 401
+        return render_template(
+            "login.html",
+            asset_version=ASSET_VERSION,
+            next_path=_safe_next_path(request.form.get("next")),
+            login_error=message,
+            username=username,
+        ), 401
+
+    session.clear()
+    session["authenticated"] = True
+    session["username"] = username
+    session.permanent = True
+    next_path = _safe_next_path(payload.get("next"))
+    if request.is_json:
+        return jsonify({"ok": True, "authenticated": True, "username": username, "next": next_path})
+    return redirect(next_path)
+
+
+@app.route("/logout", methods=["GET", "POST"])
+def logout():
+    """Clear only this browser's session; other admin sessions remain active."""
+    session.clear()
+    if request.is_json:
+        return jsonify({"ok": True, "authenticated": False})
+    return redirect(url_for("login"))
 
 
 def _browser_session_id() -> str:
@@ -725,6 +802,8 @@ def inject_globals():
         total_agent_challenges=len(AGENT_CHALLENGES),
         asset_version=ASSET_VERSION,
         app_version=APP_VERSION,
+        authenticated=_is_authenticated(),
+        current_username=session.get("username", ""),
         i18n_catalog=_build_i18n_catalog(),
         range_status={
             "online": True,

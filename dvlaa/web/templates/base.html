@@ -143,6 +143,13 @@
                 <button id="languageToggleBtn" class="btn-dv navbar-toggle-btn" type="button" aria-label="Switch language" title="Switch language">
                     <span id="languageToggleLabel">EN</span>
                 </button>
+                {% if authenticated %}
+                <div class="dv-session-user">
+                    <span data-i18n="logged_in_as">登录用户</span>
+                    <strong>{{ current_username }}</strong>
+                </div>
+                <a class="btn-dv navbar-toggle-btn dv-logout-link" href="/logout" data-i18n="logout">退出登录</a>
+                {% endif %}
             </div>
         </header>
 

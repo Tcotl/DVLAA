@@ -46,6 +46,8 @@ const DVLAA_I18N = {
         copied: "已复制",
         copy: "复制",
         copy_payload: "复制 Payload",
+        logged_in_as: "登录用户",
+        logout: "退出登录",
     },
     en: {
         dvlaa_console: "DVLAA Console",
@@ -89,6 +91,8 @@ const DVLAA_I18N = {
         copied: "Copied",
         copy: "Copy",
         copy_payload: "Copy Payload",
+        logged_in_as: "Signed in as",
+        logout: "Sign out",
     },
 };
 

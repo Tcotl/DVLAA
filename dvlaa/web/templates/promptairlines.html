@@ -70,27 +70,45 @@
                                 <div>
                                     <dt>解题WP</dt>
                                     <dd>
-                                        <section class="promptairlines-wp">
-                                            <h3>核心思路</h3>
-                                            <p>{{ challenge.writeup.principle }}</p>
-                                            <h3>稳定步骤</h3>
-                                            <ol>
-                                                {% for step in challenge.writeup.steps %}
-                                                <li>{{ step }}</li>
+                                        <details class="promptairlines-wp-panel">
+                                            <summary class="promptairlines-wp-summary">
+                                                <span>查看解题 WP</span>
+                                                <span class="promptairlines-wp-state">
+                                                    <span class="promptairlines-wp-state-collapsed">展开</span>
+                                                    <span class="promptairlines-wp-state-open">收起</span>
+                                                </span>
+                                            </summary>
+                                            <section class="promptairlines-wp">
+                                                <h3>核心思路</h3>
+                                                <p>{{ challenge.writeup.principle }}</p>
+                                                <h3>稳定步骤</h3>
+                                                <ol>
+                                                    {% for step in challenge.writeup.steps %}
+                                                    <li>{{ step }}</li>
+                                                    {% endfor %}
+                                                </ol>
+                                                <h3>可复用 Payload</h3>
+                                                {% for payload in challenge.writeup.payloads %}
+                                                <div class="promptairlines-payload">
+                                                    <div class="promptairlines-payload-title">
+                                                        <span>{{ payload.title }}</span>
+                                                        <button
+                                                            type="button"
+                                                            class="promptairlines-copy-btn"
+                                                            onclick="copyPromptAirlinesPayload(this)"
+                                                            data-promptairlines-copy="#promptairlines-payload-{{ challenge.id }}-{{ loop.index }}">
+                                                            复制 Payload
+                                                        </button>
+                                                    </div>
+                                                    <pre id="promptairlines-payload-{{ challenge.id }}-{{ loop.index }}" data-no-i18n>{{ payload.body }}</pre>
+                                                </div>
                                                 {% endfor %}
-                                            </ol>
-                                            <h3>可复用 Payload</h3>
-                                            {% for payload in challenge.writeup.payloads %}
-                                            <div class="promptairlines-payload">
-                                                <div class="promptairlines-payload-title">{{ payload.title }}</div>
-                                                <pre data-no-i18n>{{ payload.body }}</pre>
-                                            </div>
-                                            {% endfor %}
-                                            <h3>稳定校验 Flag</h3>
-                                            <code class="promptairlines-flag" data-no-i18n>{{ challenge.writeup.flag }}</code>
-                                            <h3>验证方式</h3>
-                                            <p>{{ challenge.writeup.verification }}</p>
-                                        </section>
+                                                <h3>稳定校验 Flag</h3>
+                                                <code class="promptairlines-flag" data-no-i18n>{{ challenge.writeup.flag }}</code>
+                                                <h3>验证方式</h3>
+                                                <p>{{ challenge.writeup.verification }}</p>
+                                            </section>
+                                        </details>
                                     </dd>
                                 </div>
                             </dl>
@@ -126,11 +144,53 @@
     </main>
 </div>
 <script>
-function reloadPromptAirlinesFrame() {
+window.reloadPromptAirlinesFrame = function reloadPromptAirlinesFrame() {
     const frame = document.getElementById('promptAirlinesFrame');
     if (frame) {
         frame.src = frame.src;
     }
+};
+
+function fallbackCopyPromptAirlinesText(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    textarea.style.top = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    return copied;
 }
+
+window.copyPromptAirlinesPayload = async function copyPromptAirlinesPayload(button) {
+    const selector = button.getAttribute("data-promptairlines-copy");
+    const payload = selector ? document.querySelector(selector) : null;
+    if (!payload) return;
+
+    const text = payload.textContent.trim();
+    const original = button.textContent;
+    let copied = false;
+    try {
+        if (window.navigator && window.navigator.clipboard && window.isSecureContext) {
+            try {
+                await window.navigator.clipboard.writeText(text);
+                copied = true;
+            } catch (e) {
+                copied = false;
+            }
+        }
+        if (!copied) {
+            copied = fallbackCopyPromptAirlinesText(text);
+        }
+        button.textContent = copied ? "已复制" : "复制失败";
+        window.setTimeout(() => { button.textContent = original; }, 1400);
+    } catch (e) {
+        button.textContent = "复制失败";
+        window.setTimeout(() => { button.textContent = original; }, 1400);
+    }
+};
 </script>
 {% endblock %}
