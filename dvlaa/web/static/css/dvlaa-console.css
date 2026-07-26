@@ -2250,6 +2250,69 @@ html[data-theme="light"] .btn-dv:hover {
   padding-left: 1rem;
 }
 
+.promptairlines-wp {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.promptairlines-wp h3 {
+  margin: 0.15rem 0 0;
+  color: var(--text-bright);
+  font-size: 0.74rem;
+}
+
+.promptairlines-wp p,
+.promptairlines-wp ol {
+  margin: 0;
+}
+
+.promptairlines-wp ol {
+  display: grid;
+  gap: 0.35rem;
+  padding-left: 1rem;
+}
+
+.promptairlines-payload {
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: rgba(3, 7, 18, 0.42);
+}
+
+.promptairlines-payload-title {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--accent-blue);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.promptairlines-payload pre {
+  max-height: 230px;
+  margin: 0;
+  overflow: auto;
+  padding: 0.65rem;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.promptairlines-flag {
+  display: block;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(46, 160, 67, 0.35);
+  border-radius: 6px;
+  background: rgba(46, 160, 67, 0.08);
+  color: #7ee787;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  overflow-wrap: anywhere;
+}
+
 .promptairlines-frame-header > span {
   color: var(--text-muted);
   font-size: 0.68rem;
@@ -2350,6 +2413,7 @@ html[data-theme="light"] .btn-dv:hover {
 }
 
 html[data-theme="light"] .promptairlines-challenge-card,
+html[data-theme="light"] .promptairlines-payload,
 html[data-theme="light"] .promptairlines-workflow > div,
 html[data-theme="light"] .promptairlines-terms th,
 html[data-theme="light"] .promptairlines-terms td {

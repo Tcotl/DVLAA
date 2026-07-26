@@ -44,7 +44,7 @@ Integrated attack-defense labs are classified under the corresponding LLM Top 10
 - **43 local labs**: 24 OWASP LLM sub-challenges, 10 Agent scenarios, and 9 integrated attack-defense labs.
 - **Real interactive payload validation**: Challenges are validated through model responses, tool calls, state machines, knowledge-base updates, or multi-turn context instead of frontend-only rules.
 - **Unified challenge pages**: LLM, Agent, and integrated labs share a consistent layout for background, objectives, sibling navigation, terminal interaction, and Flag verification.
-- **Online training proxy**: The Online AI Security Training entry now integrates Prompt Airlines with Chinese challenge briefs and in-system proxied live interaction.
+- **Online training proxy**: The Online AI Security Training entry now integrates Prompt Airlines with Chinese challenge briefs, stable writeups, and in-system proxied live interaction.
 - **Source and prompt viewer**: Challenge pages expose system prompts, runtime configuration, and core implementation with runtime Flags replaced by placeholders.
 - **Model management**: Supports local models, Ollama, SiliconFlow, and OpenAI-compatible providers with masked API Key display.
 - **Bilingual UI and theme switching**: The top navigation bar provides Chinese/English and dark/light switches with browser-local preferences.

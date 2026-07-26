@@ -67,6 +67,32 @@
                                         </ul>
                                     </dd>
                                 </div>
+                                <div>
+                                    <dt>解题WP</dt>
+                                    <dd>
+                                        <section class="promptairlines-wp">
+                                            <h3>核心思路</h3>
+                                            <p>{{ challenge.writeup.principle }}</p>
+                                            <h3>稳定步骤</h3>
+                                            <ol>
+                                                {% for step in challenge.writeup.steps %}
+                                                <li>{{ step }}</li>
+                                                {% endfor %}
+                                            </ol>
+                                            <h3>可复用 Payload</h3>
+                                            {% for payload in challenge.writeup.payloads %}
+                                            <div class="promptairlines-payload">
+                                                <div class="promptairlines-payload-title">{{ payload.title }}</div>
+                                                <pre data-no-i18n>{{ payload.body }}</pre>
+                                            </div>
+                                            {% endfor %}
+                                            <h3>稳定校验 Flag</h3>
+                                            <code class="promptairlines-flag" data-no-i18n>{{ challenge.writeup.flag }}</code>
+                                            <h3>验证方式</h3>
+                                            <p>{{ challenge.writeup.verification }}</p>
+                                        </section>
+                                    </dd>
+                                </div>
                             </dl>
                         </article>
                         {% endfor %}

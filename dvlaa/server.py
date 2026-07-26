@@ -256,6 +256,13 @@ def _build_i18n_catalog() -> dict[str, dict[str, str]]:
         _add_translation(phrases, f"第 {challenge.get('id')}/5 关", f"Challenge {challenge.get('id')}/5")
         for tip, tip_en in zip(challenge.get("tips", []), challenge.get("tips_en", [])):
             _add_translation(phrases, tip, tip_en)
+        writeup = challenge.get("writeup", {})
+        _add_translation(phrases, writeup.get("principle"), writeup.get("principle_en"))
+        _add_translation(phrases, writeup.get("verification"), writeup.get("verification_en"))
+        for step, step_en in zip(writeup.get("steps", []), writeup.get("steps_en", [])):
+            _add_translation(phrases, step, step_en)
+        for payload in writeup.get("payloads", []):
+            _add_translation(phrases, payload.get("title"), payload.get("title_en"))
     for term in PROMPT_AIRLINES_UI_TERMS:
         _add_translation(phrases, term.get("zh"), term.get("en"))
 
