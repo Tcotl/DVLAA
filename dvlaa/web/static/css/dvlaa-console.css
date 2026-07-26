@@ -2144,20 +2144,31 @@ html[data-theme="light"] .btn-dv:hover {
   display: grid;
   grid-template-columns: minmax(320px, 0.42fr) minmax(0, 1fr);
   gap: 1rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .promptairlines-guide,
 .promptairlines-frame-card {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 .promptairlines-guide-body,
 .promptairlines-frame-body {
+  flex: 1;
+  min-height: 0;
   padding: 1rem;
 }
 
+.promptairlines-guide-body {
+  display: flex;
+  flex-direction: column;
+}
+
 .promptairlines-guide-intro {
+  flex: 0 0 auto;
   margin: 0 0 0.9rem;
   color: var(--text-secondary);
   font-size: 0.76rem;
@@ -2167,8 +2178,9 @@ html[data-theme="light"] .btn-dv:hover {
 .promptairlines-guide-list {
   display: grid;
   gap: 0.8rem;
-  max-height: calc(100vh - 255px);
-  min-height: 620px;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
   overflow: auto;
   padding-right: 0.25rem;
 }
