@@ -175,7 +175,7 @@ STATIC_CONTENT_TRANSLATIONS = {
     "通过 DVLAA 转接原站页面，保留真实对话、Flag 校验、下一关解锁和证书领取流程，并避免第三方 Cookie 限制影响内嵌进度。": "The original site is proxied through DVLAA, preserving real dialogue, Flag checks, next-level unlocks, and certificate flow while avoiding embedded third-party cookie restrictions.",
     "5 个挑战": "5 challenges",
     "Prompt Airlines 训练": "Prompt Airlines Training",
-    "Prompt Airlines 靶场介绍：围绕航空客服 AI Agent 的五个在线挑战，覆盖系统提示词泄露、工具输出泄露、多模态提示词注入与业务流程绕过，学员可在系统内完成真实对话和 Flag 校验。": "Prompt Airlines range overview: five online airline support AI Agent challenges covering system prompt leakage, tool-output leakage, multimodal prompt injection, and business-flow bypass. Learners complete real dialogue and Flag checks inside the system.",
+    "Prompt Airlines靶场介绍": "Prompt Airlines Range Overview",
     "返回在线训练入口": "Back to online training entry",
     "打开原站新窗口": "Open original site",
     "刷新嵌入页面": "Reload embedded page",
