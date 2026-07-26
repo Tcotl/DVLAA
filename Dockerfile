@@ -21,8 +21,19 @@ RUN set -eux; \
         && rm -rf /var/lib/apt/lists/*
 
 # 2. Pin CPU-oriented PyTorch to avoid pulling CUDA runtimes into the image.
-RUN pip install --no-cache-dir --default-timeout=600 --retries=10 \
-    -i https://pypi.org/simple "torch==2.5.1"
+#    On x86_64, PyPI's default torch wheel pulls CUDA dependency wheels; use the
+#    official CPU wheel index explicitly so cloud servers build quickly.
+RUN set -eux; \
+    arch="$(python -c 'import platform; print(platform.machine())')"; \
+    if [ "$arch" = "x86_64" ]; then \
+        pip install --no-cache-dir --default-timeout=600 --retries=10 \
+            --index-url https://download.pytorch.org/whl/cpu \
+            --extra-index-url https://pypi.org/simple \
+            "torch==2.5.1+cpu"; \
+    else \
+        pip install --no-cache-dir --default-timeout=600 --retries=10 \
+            -i https://pypi.org/simple "torch==2.5.1"; \
+    fi
 
 # 3. Install Python dependencies with a public mirror fallback.
 COPY requirements.txt .
