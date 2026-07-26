@@ -337,17 +337,6 @@
     1px 1px 0 rgba(var(--login-blue), 1);
 }
 
-.login-card-footer {
-  display: flex;
-  justify-content: center;
-  gap: 0.42rem;
-  margin-top: 1.15rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid rgba(var(--login-blue), 0.2);
-  color: #64748b;
-  font-size: 0.6rem;
-}
-
 @keyframes login-neon-flicker {
   0%, 18%, 20%, 48%, 50%, 78%, 80%, 100% {
     opacity: 1;
@@ -407,7 +396,4 @@
     font-size: 1.18rem;
   }
 
-  .login-card-footer {
-    flex-wrap: wrap;
-  }
 }
