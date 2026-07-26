@@ -2143,22 +2143,28 @@ html[data-theme="light"] .btn-dv:hover {
 .promptairlines-workspace {
   display: grid;
   grid-template-columns: minmax(320px, 0.42fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 1rem;
   align-items: stretch;
+  height: clamp(520px, calc(100vh - 245px), 920px);
+  min-height: 0;
 }
 
 .promptairlines-guide,
 .promptairlines-frame-card {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
   min-width: 0;
   min-height: 0;
 }
 
 .promptairlines-guide-body,
 .promptairlines-frame-body {
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
+  overflow: hidden;
   padding: 1rem;
 }
 
@@ -2177,12 +2183,15 @@ html[data-theme="light"] .btn-dv:hover {
 
 .promptairlines-guide-list {
   display: grid;
+  align-content: start;
   gap: 0.8rem;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   max-height: none;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding-right: 0.25rem;
+  overscroll-behavior: contain;
 }
 
 .promptairlines-challenge-card {
@@ -2391,7 +2400,16 @@ html[data-theme="light"] .btn-dv:hover {
   font-weight: 700;
 }
 
+.promptairlines-frame-body {
+  display: flex;
+  flex-direction: column;
+}
+
 .promptairlines-frame-shell {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
   overflow: hidden;
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -2417,9 +2435,10 @@ html[data-theme="light"] .btn-dv:hover {
 
 .promptairlines-frame {
   display: block;
+  flex: 1 1 0;
   width: 100%;
-  height: min(920px, calc(100vh - 250px));
-  min-height: 720px;
+  height: 100%;
+  min-height: 0;
   border: 0;
   background: #ffffff;
 }
@@ -2437,8 +2456,32 @@ html[data-theme="light"] .promptairlines-frame-shell {
 }
 
 @media (max-width: 1280px) {
-  .promptairlines-workspace { grid-template-columns: 1fr; }
-  .promptairlines-guide-list { max-height: none; min-height: 0; }
+  .promptairlines-workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    height: auto;
+    min-height: 0;
+  }
+  .promptairlines-guide,
+  .promptairlines-frame-card {
+    height: auto;
+  }
+  .promptairlines-guide-body,
+  .promptairlines-frame-body {
+    overflow: visible;
+  }
+  .promptairlines-guide-list {
+    max-height: none;
+    min-height: 0;
+    overflow: visible;
+  }
+  .promptairlines-frame-shell {
+    min-height: 620px;
+  }
+  .promptairlines-frame {
+    flex: 1 1 auto;
+    min-height: 580px;
+  }
 }
 
 @media (max-width: 760px) {
@@ -2446,7 +2489,8 @@ html[data-theme="light"] .promptairlines-frame-shell {
   .promptairlines-actions { justify-content: flex-start; }
   .promptairlines-workflow { grid-template-columns: 1fr; }
   .promptairlines-challenge-detail div { grid-template-columns: 1fr; }
-  .promptairlines-frame { min-height: 620px; }
+  .promptairlines-frame-shell { min-height: 560px; }
+  .promptairlines-frame { min-height: 520px; }
 }
 
 /* DVLAA AI 助手攻防交互面板 */
