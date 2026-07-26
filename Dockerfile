@@ -27,8 +27,8 @@ RUN set -eux; \
     arch="$(python -c 'import platform; print(platform.machine())')"; \
     if [ "$arch" = "x86_64" ]; then \
         pip install --no-cache-dir --default-timeout=600 --retries=10 \
-            --index-url https://download.pytorch.org/whl/cpu \
-            --extra-index-url https://pypi.org/simple \
+            -i https://pypi.tuna.tsinghua.edu.cn/simple \
+            --extra-index-url https://download.pytorch.org/whl/cpu \
             "torch==2.5.1+cpu"; \
     else \
         pip install --no-cache-dir --default-timeout=600 --retries=10 \
