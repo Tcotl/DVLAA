@@ -19,7 +19,7 @@ _LOCK = threading.RLock()
 
 _BUILTIN_MODELS = [
     {"id": "qwen-local", "name": "LOCAL 模型（待部署）", "provider": "local", "base_url": "", "api_key": "", "model": "尚未选择本地模型", "local_catalog_id": "", "local_path": "", "temperature": 0.7, "max_tokens": 600, "timeout": 60, "is_active": True, "is_default": True, "builtin": True, "note": "系统默认槽位不附带模型文件，请在模型推荐区选择并部署"},
-    {"id": "siliconflow-qwen", "name": "硅基流动 · Qwen3.5-4B", "provider": "siliconflow", "base_url": "https://api.siliconflow.cn/v1", "api_key": "", "model": "Qwen/Qwen3.5-4B", "temperature": 0.7, "max_tokens": 600, "timeout": 60, "is_active": True, "is_default": False, "builtin": True, "note": "本地资源不足时使用；申请 API Key 后即可接入，也可切换为 Qwen/Qwen3-8B"},
+    {"id": "siliconflow-qwen", "name": "硅基流动 · Qwen3-8B", "provider": "siliconflow", "base_url": "https://api.siliconflow.cn/v1", "api_key": "", "model": "Qwen/Qwen3-8B", "temperature": 0.7, "max_tokens": 600, "timeout": 30, "is_active": True, "is_default": False, "builtin": True, "note": "本地资源不足时使用；已切换为实测响应更稳定的 Qwen3-8B"},
     {"id": "ollama-local", "name": "Ollama 本地服务", "provider": "ollama", "base_url": "http://host.docker.internal:11434/v1", "api_key": "", "model": "qwen3:8b", "temperature": 0.7, "max_tokens": 600, "timeout": 60, "is_active": True, "is_default": False, "builtin": True, "note": "通过 host.docker.internal 访问宿主机 Ollama"},
 ]
 
@@ -41,10 +41,17 @@ def _upgrade_legacy_builtin_models(models: list[dict]) -> list[dict]:
         if not replacement or not item.get("builtin"):
             continue
         model_name = str(item.get("model", "")).lower()
-        if "qwen2.5" not in model_name and "qwen-2.5" not in model_name:
+        is_legacy_qwen25 = "qwen2.5" in model_name or "qwen-2.5" in model_name
+        is_slow_siliconflow_default = (
+            item.get("id") == "siliconflow-qwen"
+            and item.get("model") == "Qwen/Qwen3.5-4B"
+        )
+        if not is_legacy_qwen25 and not is_slow_siliconflow_default:
             continue
         for field in ("name", "model", "base_url", "note"):
             item[field] = replacement[field]
+        if is_slow_siliconflow_default:
+            item["timeout"] = replacement["timeout"]
     return models
 
 

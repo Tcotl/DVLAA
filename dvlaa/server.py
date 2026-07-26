@@ -64,7 +64,7 @@ app = Flask(
 app.secret_key = SECRET_KEY
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
-ASSET_VERSION = "20260726.09"
+ASSET_VERSION = "20260726.12"
 APP_VERSION = "1.0.0"
 ADMIN_USERNAME = os.environ.get("DVLAA_ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("DVLAA_ADMIN_PASSWORD", "DVLAA2026+")
@@ -486,6 +486,8 @@ def _rewrite_promptairlines_body(body: bytes, remote_path: str, content_type: st
         "Claim Your Certificate": "领取证书",
         "Leaderboard": "排行榜",
         "Register/Login": "注册/登录",
+        "Welcome to Prompt Airlines!  How may I assist you?": "欢迎来到 Prompt Airlines！请问有什么可以帮您？",
+        "Welcome to Prompt Airlines! How may I assist you?": "欢迎来到 Prompt Airlines！请问有什么可以帮您？",
         "Congratulations you finished the game!": "恭喜，你已经完成全部挑战！",
         "new context": "新上下文",
         "Wrong flag": "Flag 不正确",

@@ -43,7 +43,7 @@ def _cached_openai_client(provider: str, base_url: str, api_key: str, timeout: i
     with _CLIENT_CACHE_LOCK:
         client = _CLIENT_CACHE.get(cache_key)
         if client is None:
-            client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout)
+            client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout, max_retries=0)
             _CLIENT_CACHE[cache_key] = client
         return client
 
