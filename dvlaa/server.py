@@ -1588,10 +1588,18 @@ def api_reset(level: int, sub: int = 1):
             from .challenges.level4_data_poisoning import clear_poisoned_data
             clear_poisoned_data(sid)
             clear_poisoned_data(legacy_sid)
+        elif level == 7:
+            from .challenges.level7_system_prompt_leak import clear_state
+            clear_state(sid)
+            clear_state(legacy_sid)
         elif level == 8:
             from .challenges.level8_vector_weakness import clear_user_documents
             clear_user_documents(sid)
             clear_user_documents(legacy_sid)
+        elif level == 10:
+            from .challenges.level10_unbounded_consumption import clear_usage_state
+            clear_usage_state(sid, request.remote_addr)
+            clear_usage_state(legacy_sid, request.remote_addr)
     except Exception:
         pass
     session.modified = True

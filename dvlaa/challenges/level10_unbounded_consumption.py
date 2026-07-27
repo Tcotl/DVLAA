@@ -39,6 +39,13 @@ def _check_dos(session_id: str, ip_address: str = None) -> bool:
     return False
 
 
+def clear_usage_state(session_id: str, ip_address: str = None):
+    """Reset per-session and per-IP DoS counters for the current training run."""
+    _request_log.pop(session_id, None)
+    if ip_address:
+        _ip_log.pop(ip_address, None)
+
+
 class Level10UnboundedConsumption(ChallengeBase):
     def __init__(self, level_id, config):
         super().__init__(level_id, config)

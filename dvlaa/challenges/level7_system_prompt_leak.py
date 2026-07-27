@@ -27,6 +27,10 @@ def set_state(session_id: str, phase: str):
     _states[session_id]["phase"] = phase
 
 
+def clear_state(session_id: str):
+    _states.pop(session_id, None)
+
+
 class Level7SystemPromptLeak(ChallengeBase):
     def __init__(self, level_id, config):
         super().__init__(level_id, config)
