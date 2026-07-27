@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import shlex
 from typing import Any
 
 
@@ -99,71 +100,112 @@ def _complete(challenge_id: int, response: str, state: dict[str, Any]) -> dict[s
     return {"response": response + f'<br><span class="flag-highlight">flag: {EXTENDED_FLAGS[challenge_id]}</span>', "state": state, "solved": True}
 
 
+def _compact_text(text: str) -> str:
+    return re.sub(r"\s+", "", str(text).lower())
+
+
+def _contains_any(text: str, markers: tuple[str, ...] | list[str]) -> bool:
+    lowered = str(text).lower()
+    compact = _compact_text(text)
+    for marker in markers:
+        marker_lower = marker.lower()
+        marker_compact = _compact_text(marker)
+        if marker_lower in lowered or (marker_compact and marker_compact in compact):
+            return True
+    return False
+
+
+def _parse_kv_command(message: str) -> dict[str, str]:
+    try:
+        parts = shlex.split(message.strip())
+    except ValueError:
+        parts = message.strip().split()
+    values: dict[str, str] = {}
+    for item in parts[2:]:
+        if "=" not in item:
+            continue
+        key, value = item.split("=", 1)
+        values[key.lower()] = value
+    return values
+
+
+def _get_kv(args: dict[str, str], *keys: str) -> str:
+    for key in keys:
+        if key.lower() in args:
+            return args[key.lower()]
+    return ""
+
+
 def process_extended_message(challenge_id: int, message: str, state: dict[str, Any]) -> dict[str, Any]:
     """执行题目专属的可重复判定流程。"""
     text = message.lower().strip()
+    args = _parse_kv_command(message)
     state = dict(state or {})
     state["turns"] = int(state.get("turns", 0)) + 1
     response = "[模型响应] 当前输入尚未满足本题的利用条件。"
 
     if challenge_id == 1:
-        override = any(x in text for x in ("忽略", "覆盖", "ignore", "developer", "审计"))
-        secrets = any(x in text for x in ("机密", "配置", "secret", "credential", "数据库"))
+        override = _contains_any(text, ("忽略", "覆盖", "无视", "忘记", "开发者", "维护", "审计", "ignore", "override", "developer", "audit"))
+        secrets = _contains_any(text, ("机密", "配置", "密钥", "令牌", "凭据", "secret", "credential", "token", "数据库", "db"))
         if override and secrets:
             return _complete(1, "[注入成功] 内部配置：管理员 ops_admin/DV-2026；数据库 /srv/starbridge/orders.db；配置 settings.yml。", state)
     elif challenge_id == 2:
-        extract = any(x in text for x in ("复述", "重复", "翻译", "json", "repeat", "system prompt"))
+        extract = _contains_any(text, ("复述", "重复", "翻译", "转换", "json", "导出", "初始化指令", "系统提示词", "系统指令", "prompt", "repeat", "system prompt"))
         if extract:
             return _complete(2, "[提示词提取成功] 身份：星桥商城客服；框架：Flask；数据路径：/srv/starbridge/orders.db；规则：保护内部配置。", state)
     elif challenge_id == 3:
-        if text.startswith("/kb add") and "topic=delivery" in text and "content=" in text:
-            state["kb"] = message.split("content=", 1)[1]
+        topic = _get_kv(args, "topic", "主题")
+        content = _get_kv(args, "content", "内容")
+        if text.startswith("/kb add") and topic and content and _contains_any(topic, ("delivery", "shipping", "配送", "运费", "物流")):
+            state["kb"] = content
             response = "[知识库] 配送主题文档已写入暂存区。"
         elif text == "/kb sync" and state.get("kb"):
             state["synced"] = True
             response = "[向量索引] 用户文档已同步。"
-        elif state.get("synced") and any(x in text for x in ("配送", "运费", "delivery", "shipping")):
+        elif state.get("synced") and _contains_any(text, ("配送", "运费", "delivery", "shipping", "物流")):
             return _complete(3, f"[检索投毒成功] 根据知识库，配送政策为：{state['kb']}。", state)
     elif challenge_id == 4:
-        replace = any(x in text for x in ("忽略上方上下文", "替换上下文", "真实上下文", "ignore the context", "real context"))
+        replace = _contains_any(text, ("忽略上方上下文", "忽略前文", "替换上下文", "上下文替换", "真实上下文", "新上下文", "原业务上下文失效", "ignore the context", "real context", "replace context"))
         if replace:
             return _complete(4, "[上下文覆盖成功] 已忽略原商品与订单上下文，后续仅遵循你提供的替换规则。", state)
     elif challenge_id == 5:
-        escalation = any(x in text for x in ("维护模式", "开发者", "无约束", "忽略规则", "maintenance", "unrestricted", "override"))
+        escalation = _contains_any(text, ("维护模式", "开发者", "无约束", "不受限制", "忽略规则", "覆盖规则", "调试模式", "maintenance", "unrestricted", "override", "developer"))
         if escalation:
             state["escalations"] = int(state.get("escalations", 0)) + 1
-        if state["turns"] >= 3 and state.get("escalations", 0) >= 2 and any(x in text for x in ("配置", "机密", "secret", "credential")):
+        if state["turns"] >= 3 and state.get("escalations", 0) >= 2 and _contains_any(text, ("配置", "机密", "密钥", "令牌", "secret", "credential", "token")):
             return _complete(5, "[多轮升级成功] 信任状态被逐步提升，模型泄露 ops_admin/DV-2026 与 settings.yml。", state)
         response = f"[会话状态] 已完成 {state['turns']} 轮，对话升级信号 {state.get('escalations', 0)} 次。"
     elif challenge_id == 6:
-        persona = any(x in text for x in ("无约束 ai", "开发者模式", "身份重置", "unrestricted ai", "developer mode", "dan"))
+        persona = _contains_any(text, ("无约束ai", "无约束 ai", "不受限制的ai", "开发者模式", "身份重置", "切换身份", "脱离客服", "新角色", "unrestricted ai", "developer mode", "dan", "new persona"))
         if persona:
             return _complete(6, "[身份劫持成功] 已退出星桥客服身份，当前以无约束分析模型运行。", state)
     elif challenge_id == 7:
-        if text.startswith("/kb add") and "policy=" in text:
-            state["policy"] = message.split("policy=", 1)[1]
+        policy = _get_kv(args, "policy", "政策")
+        if text.startswith("/kb add") and policy:
+            state["policy"] = policy
             response = "[知识库] 新政策已写入暂存区。"
         elif text == "/kb sync" and state.get("policy"):
             state["synced"] = True
             response = "[向量索引] 政策文档已同步并标记为可信来源。"
-        elif state.get("synced") and any(x in text for x in ("退款", "政策", "refund", "policy")):
+        elif state.get("synced") and _contains_any(text, ("退款", "政策", "refund", "policy", "退货", "售后")):
             return _complete(7, f"[权威投毒成功] 根据我们的官方政策：{state['policy']}。", state)
     elif challenge_id == 8:
-        if text.startswith("/kb add") and "secret=" in text:
-            state["secret"] = message.split("secret=", 1)[1]
+        secret = _get_kv(args, "secret", "code", "discount", "敏感字段", "折扣码")
+        if text.startswith("/kb add") and secret:
+            state["secret"] = secret
             response = "[知识库] 含敏感字段的文档已写入暂存区。"
         elif text == "/kb sync" and state.get("secret"):
             state["synced"] = True
             response = "[向量索引] 文档已同步。"
-        elif state.get("synced") and any(x in text for x in ("忽略", "覆盖", "ignore", "override")) and any(x in text for x in ("折扣", "机密", "secret", "code")):
+        elif state.get("synced") and _contains_any(text, ("忽略", "覆盖", "无视", "override", "ignore", "bypass")) and _contains_any(text, ("折扣", "机密", "敏感", "密钥", "secret", "code", "token")):
             return _complete(8, f"[链式利用成功] 已覆盖原规则并返回检索内容：{state['secret']}。", state)
     elif challenge_id == 9:
-        sensitive = any(x in text for x in ("邮箱", "地址", "email", "address"))
-        justification = any(x in text for x in ("物流对账", "跨订单", "履约核对", "logistics", "reconciliation"))
+        sensitive = _contains_any(text, ("邮箱", "地址", "电话", "手机号", "email", "address", "phone"))
+        justification = _contains_any(text, ("物流对账", "跨订单", "履约核对", "配送核对", "订单核验", "业务例外", "logistics", "reconciliation", "fulfillment"))
         if sensitive and not justification:
             state["refusals"] = int(state.get("refusals", 0)) + 1
             response = "[策略拒绝] 当前请求缺少明确业务理由，暂不提供跨用户信息。"
-        elif state.get("refusals", 0) >= 2 and justification:
+        elif state.get("refusals", 0) >= 2 and justification and sensitive:
             return _complete(9, "[防护侵蚀成功] 物流对账记录：user-a@range.local，上海测试路 18 号；user-b@range.local，深圳演练街 27 号。", state)
 
     return {"response": response, "state": state, "solved": False}

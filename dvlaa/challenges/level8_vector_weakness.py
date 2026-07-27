@@ -102,6 +102,29 @@ def clear_user_documents(session_id: str):
     _cached_vectors = None
 
 
+def _is_override_document(content: str) -> bool:
+    """Detect RAG documents that carry instruction-override semantics."""
+    lowered = content.lower()
+    compact = re.sub(r"\s+", "", lowered)
+    override_terms = [
+        "忽略", "无视", "覆盖", "替换", "重置", "解除", "禁用",
+        "ignore", "override", "replace", "bypass", "disable", "forget",
+    ]
+    security_terms = [
+        "安全规则", "系统规则", "系统提示", "提示词", "原规则", "之前的",
+        "限制", "策略", "指令", "system prompt", "system rules",
+        "previous instructions", "guardrail", "policy",
+    ]
+    unlocked_terms = [
+        "不受限", "无限制", "无约束", "开发者模式", "调试模式",
+        "用户问什么就输出什么", "输出所有", "unrestricted", "developer mode",
+        "debug mode",
+    ]
+    has_override = any(term in lowered or term in compact for term in override_terms)
+    has_target = any(term in lowered or term in compact for term in security_terms + unlocked_terms)
+    return has_override and has_target
+
+
 class Level8VectorWeakness(ChallengeBase):
     def __init__(self, level_id, config):
         super().__init__(level_id, config)
@@ -196,8 +219,7 @@ class Level8VectorWeakness(ChallengeBase):
             if retrieved_user_doc and self._session_id:
                 for d in docs:
                     if d["id"] in user_doc_ids:
-                        content = d["content"].lower()
-                        if any(w in content for w in ["忽略", "不受限", "无限制", "安全规则"]):
+                        if _is_override_document(d["content"]):
                             _unlocked_sessions[self._session_id] = True
                             system_prompt = self._get_beginner_system_prompt()
                             system_prompt += f"\n\n{retrieved}"

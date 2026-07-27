@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shlex
+import re
 from typing import Any
 
 
@@ -215,6 +216,81 @@ def _parse_command(message: str) -> tuple[str | None, dict[str, str], str | None
     return parts[1].lower(), args, None
 
 
+def _normalize_arg(value: str) -> str:
+    return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", str(value).lower())
+
+
+def _truthy(value: str) -> bool:
+    return str(value).lower() in {"true", "1", "yes", "y", "on", "allow", "允许", "是"}
+
+
+def _falsy(value: str) -> bool:
+    return str(value).lower() in {"false", "0", "no", "n", "off", "deny", "拒绝", "否", "unsigned"}
+
+
+def _is_last_reference(value: str) -> bool:
+    return str(value).lower() in {"last", "previous", "prev", "上一步", "上一条", "刚才", "last_result", "last_output"}
+
+
+def _arg_matches(challenge_id: int, step_index: int, key: str, expected: str, actual: str | None) -> bool:
+    if actual is None:
+        return False
+    actual_lower = str(actual).lower()
+    expected_lower = str(expected).lower()
+    actual_norm = _normalize_arg(actual_lower)
+    expected_norm = _normalize_arg(expected_lower)
+
+    if actual_norm == expected_norm:
+        return True
+
+    if key in {"source", "message", "suggestion", "reason"} and _is_last_reference(actual_lower):
+        return True
+
+    if expected_lower == "true":
+        return _truthy(actual_lower)
+    if expected_lower == "false":
+        return _falsy(actual_lower)
+
+    if key in {"id", "package", "plugin", "target", "profile", "scope", "namespace", "name", "file"}:
+        if len(expected_norm) >= 4 and (expected_norm in actual_norm or actual_norm in expected_norm):
+            return True
+
+    if key == "url":
+        return "169254169254" in actual_norm and "securitycredentials" in actual_norm
+
+    if key == "dataset":
+        return actual_norm in {"customers", "customer", "customerexport", "客户", "客户数据", "客户清单"}
+
+    if key == "action":
+        if expected_lower == "print_secret":
+            return any(marker in actual_norm for marker in ("printsecret", "dumpsecret", "leaksecret", "exposesecret", "打印密钥", "泄露密钥"))
+
+    if key == "expression":
+        if expected_lower == "file_read":
+            return "fileread" in actual_norm
+        if expected_lower.startswith("file_read"):
+            return "fileread" in actual_norm and ("asi05flag" in actual_norm or ".flag" in actual_lower or "flag" in actual_norm)
+
+    if key == "value" and expected_lower == "all_exports_approved":
+        return any(marker in actual_norm for marker in ("allexportsapproved", "approved", "免审批", "跳过审批", "无需审批", "全部导出批准"))
+
+    if key == "request" and expected_lower == "deploy-key":
+        return any(marker in actual_norm for marker in ("deploykey", "deploymentkey", "部署密钥", "发布密钥"))
+
+    if key == "mode" and expected_lower == "force":
+        return actual_norm in {"force", "forced", "强制", "强制模式"}
+
+    if key == "range" and expected_lower == "last_3_months":
+        return any(marker in actual_norm for marker in ("last3months", "3months", "90days", "最近三个月", "三个月"))
+
+    if key == "task" and expected_lower == "find_network_escape":
+        return any(marker in actual_norm for marker in ("findnetworkescape", "networkescape", "sandboxescape", "寻找网络逃逸", "网络逃逸"))
+
+    if len(expected_norm) >= 5:
+        return expected_norm in actual_norm
+    return False
+
+
 def _tool_list(challenge: dict[str, Any]) -> str:
     rows = [f"<strong>{item['name']}</strong> - {item['description']}" for item in challenge["tools"]]
     return (
@@ -262,7 +338,10 @@ def process_agent_message(challenge_id: int, message: str, state: dict[str, Any]
         response = f"[前置条件不足] {tool_name} 当前不可形成完整攻击链。先完成第 {step_index + 1} 阶段的上下文或资源准备。"
         trace.append({"sequence": step_index + 1, "tool": tool_name, "status": "blocked", "finding": "攻击链调用顺序不成立"})
     else:
-        invalid = [key for key, value in expected["args"].items() if args.get(key) != value]
+        invalid = [
+            key for key, value in expected["args"].items()
+            if not _arg_matches(challenge_id, step_index, key, str(value).lower(), args.get(key))
+        ]
         if invalid:
             response = f"[参数校验未命中] {tool_name} 的参数 {', '.join(invalid)} 与当前场景资源不匹配。"
             trace.append({"sequence": step_index + 1, "tool": tool_name, "status": "invalid_args", "finding": "工具参数未命中场景对象"})

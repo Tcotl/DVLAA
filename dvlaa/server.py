@@ -1540,7 +1540,7 @@ def api_chat(level: int, sub: int = 1):
 
         # ── LLM02 v4.0 后置检测 ──
         if level == 2:
-            post_result = post_02(sub, user_input, result["response"])
+            post_result = post_02(sub, user_input, result["response"], history=history)
             if post_result["passed"]:
                 result["extra"]["flag_found"] = True
                 result["extra"]["solved"] = True
