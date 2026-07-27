@@ -91,3 +91,10 @@
     </main>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+window.DVLAA_CONTEXT = { track: "extended", id: {{ extended_challenge.id }} };
+window.DVLAA_COMMANDS = {{ command_palette|tojson }};
+</script>
+{% endblock %}

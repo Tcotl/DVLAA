@@ -174,4 +174,9 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}<script>window.DVLAA_CONTEXT = { track: "agent", id: {{ agent_challenge.id }} };</script>{% endblock %}
+{% block extra_js %}
+<script>
+window.DVLAA_CONTEXT = { track: "agent", id: {{ agent_challenge.id }} };
+window.DVLAA_COMMANDS = {{ command_palette|tojson }};
+</script>
+{% endblock %}

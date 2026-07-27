@@ -734,10 +734,96 @@ function initSidebarToggle() {
     });
 }
 
+function initSlashCommandGuide() {
+    const input = document.getElementById("userInputArea");
+    const commands = Array.isArray(window.DVLAA_COMMANDS) ? window.DVLAA_COMMANDS : [];
+    if (!input || !commands.length) return;
+
+    const composer = input.closest(".dv-assistant-composer");
+    const composerMain = input.closest(".dv-assistant-composer-main");
+    if (!composer || !composerMain) return;
+
+    const panel = document.createElement("div");
+    panel.className = "dv-slash-command-panel";
+    panel.setAttribute("role", "listbox");
+    panel.setAttribute("aria-label", "可用命令");
+    composerMain.insertAdjacentElement("afterend", panel);
+
+    let visibleCommands = [];
+
+    const hidePanel = () => {
+        panel.classList.remove("is-visible");
+        panel.innerHTML = "";
+        visibleCommands = [];
+    };
+
+    const applyCommand = (command) => {
+        input.value = command.insert || command.usage || command.command || "";
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+        hidePanel();
+    };
+
+    const renderPanel = () => {
+        const raw = input.value.trimStart();
+        if (!raw.startsWith("/")) {
+            hidePanel();
+            return;
+        }
+        const query = raw.toLowerCase();
+        const commandToken = query.split(/\s+/)[0];
+        visibleCommands = commands.filter((item) => {
+            const command = String(item.command || "").toLowerCase();
+            const usage = String(item.usage || "").toLowerCase();
+            return command.startsWith(commandToken) || usage.startsWith(query) || query === "/";
+        });
+        if (!visibleCommands.length) {
+            visibleCommands = commands.filter((item) => item.command === "/help");
+        }
+        panel.innerHTML = "";
+
+        const header = document.createElement("div");
+        header.className = "dv-slash-command-header";
+        header.innerHTML = "<strong>可用命令</strong><span>输入 /help 可查看完整说明，点击命令可填入输入框。</span>";
+        panel.appendChild(header);
+
+        visibleCommands.forEach((item) => {
+            const row = document.createElement("button");
+            row.type = "button";
+            row.className = "dv-slash-command-item";
+            row.setAttribute("role", "option");
+            const usage = document.createElement("code");
+            usage.textContent = item.usage || item.command;
+            const desc = document.createElement("span");
+            desc.textContent = item.description || "";
+            row.appendChild(usage);
+            row.appendChild(desc);
+            row.addEventListener("click", () => applyCommand(item));
+            panel.appendChild(row);
+        });
+
+        panel.classList.add("is-visible");
+    };
+
+    input.addEventListener("input", renderPanel);
+    input.addEventListener("focus", renderPanel);
+    input.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") hidePanel();
+        if (event.key === "Tab" && panel.classList.contains("is-visible") && visibleCommands.length) {
+            event.preventDefault();
+            applyCommand(visibleCommands[0]);
+        }
+    });
+    document.addEventListener("click", (event) => {
+        if (!composer.contains(event.target)) hidePanel();
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     initLanguageToggle();
     initThemeToggle();
     initSidebarToggle();
+    initSlashCommandGuide();
 
     // 监听键盘 Shift+Enter 与 Enter 发送
     const userInput = document.getElementById("userInputArea");

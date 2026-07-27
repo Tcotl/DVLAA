@@ -183,3 +183,10 @@
     </main>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+window.DVLAA_CONTEXT = { track: "owasp", level: {{ level }}, sub: {{ sub }} };
+window.DVLAA_COMMANDS = {{ command_palette|tojson }};
+</script>
+{% endblock %}

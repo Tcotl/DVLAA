@@ -3238,6 +3238,89 @@ html[data-theme="light"] .promptairlines-frame-shell {
   outline: 0 !important;
 }
 
+.dv-slash-command-panel {
+  display: none;
+  margin: 8px 0 0;
+  border: 1px solid rgba(var(--dv-accent-rgb), 0.22);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(12, 18, 28, 0.98), rgba(7, 10, 16, 0.96));
+  box-shadow:
+    0 18px 36px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.dv-slash-command-panel.is-visible {
+  display: block;
+}
+
+.dv-slash-command-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(var(--dv-accent-rgb), 0.12);
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+}
+
+.dv-slash-command-header strong {
+  color: var(--text-bright);
+  font-size: 0.76rem;
+}
+
+.dv-slash-command-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(210px, 0.72fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid rgba(var(--dv-accent-rgb), 0.08);
+  background: transparent;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.dv-slash-command-item:last-child {
+  border-bottom: 0;
+}
+
+.dv-slash-command-item:hover {
+  background: rgba(var(--dv-accent-rgb), 0.1);
+  color: var(--text-bright);
+}
+
+.dv-slash-command-item code {
+  color: rgb(var(--dv-accent-rgb));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dv-slash-command-item span {
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.command-help-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.command-help-list li {
+  margin: 0.45rem 0;
+}
+
+.command-help-list span {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
 .dv-assistant-send-button {
   min-width: 74px;
   height: 50px;
@@ -3309,6 +3392,15 @@ html[data-theme="light"] .promptairlines-frame-shell {
 
   .dv-assistant-composer-main {
     grid-template-columns: 1fr;
+  }
+
+  .dv-slash-command-header {
+    flex-direction: column;
+  }
+
+  .dv-slash-command-item {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
   }
 
   .dv-assistant-send-button {
@@ -3986,6 +4078,16 @@ html[data-theme="light"] .dv-assistant-composer-input {
 
 html[data-theme="light"] .dv-assistant-composer-input::placeholder {
   color: rgba(100, 116, 139, 0.8);
+}
+
+html[data-theme="light"] .dv-slash-command-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.12);
+}
+
+html[data-theme="light"] .dv-slash-command-item:hover {
+  background: rgba(var(--dv-accent-rgb), 0.08);
 }
 
 html[data-theme="light"] .writeup-section,

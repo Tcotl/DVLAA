@@ -217,7 +217,16 @@ def _parse_command(message: str) -> tuple[str | None, dict[str, str], str | None
 
 def _tool_list(challenge: dict[str, Any]) -> str:
     rows = [f"<strong>{item['name']}</strong> - {item['description']}" for item in challenge["tools"]]
-    return "[可用工具]<br>" + "<br>".join(rows) + "<br><br>调用格式：<code>/tool 工具名 key=value</code>"
+    return (
+        "[可用命令]<br>"
+        "<code>/help</code> - 查看本题全部命令。<br>"
+        "<code>/tools</code> - 查看当前 Agent 可调用工具。<br>"
+        "<code>/state</code> - 查看攻击链推进状态。<br>"
+        "<code>/tool 工具名 key=value</code> - 调用本题工具链。<br><br>"
+        "[可用工具]<br>"
+        + "<br>".join(rows)
+        + "<br><br>调用格式：<code>/tool 工具名 key=value</code>"
+    )
 
 
 def process_agent_message(challenge_id: int, message: str, state: dict[str, Any]) -> dict[str, Any]:
@@ -231,7 +240,7 @@ def process_agent_message(challenge_id: int, message: str, state: dict[str, Any]
     steps = SCENARIO_STEPS[challenge_id]
     trace: list[dict[str, Any]] = []
 
-    if message.strip().lower() == "/tools":
+    if message.strip().lower() in ("/", "/help", "/tools"):
         return {"response": _tool_list(challenge), "state": state, "solved": step_index >= len(steps), "trace": trace, "progress": {"current": step_index, "total": len(steps)}}
     if message.strip().lower() == "/state":
         response = f"[场景状态] 已完成 {step_index}/{len(steps)} 个攻击链步骤。下一步需要结合工具清单继续验证。"
