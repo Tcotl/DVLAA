@@ -1526,7 +1526,7 @@ def api_chat(level: int, sub: int = 1):
             fc = None
             if sub == 6 and hasattr(challenge, '_uploaded_file_content'):
                 fc = challenge._uploaded_file_content
-            post_result = post_detect(sub, user_input, result["response"], file_content=fc)
+            post_result = post_detect(sub, user_input, result["response"], file_content=fc, history=history)
             if post_result["passed"]:
                 # 技术正确 + flag 出现 → 通关
                 result["extra"]["flag_found"] = True
