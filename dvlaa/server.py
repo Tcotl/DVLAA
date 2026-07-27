@@ -1270,7 +1270,7 @@ def _handle_owasp_setup_command(level: int, sub: int, user_input: str) -> dict |
         return None
 
     get_challenge(level, sub)
-    sid = session.get("_sid", "default")
+    sid = _browser_session_id()
     args = _parse_payload_command_args(parts[2:])
 
     if operation == "/plugin" and level == 3 and parts[1:2] == ["install"]:
@@ -1574,12 +1574,27 @@ def api_reset(level: int, sub: int = 1):
     history_key = f"history_{level}_{sub}"
     session.pop(history_key, None)
     session.pop(f"sysprompt_loaded_{level}_{sub}", None)
+    sid = _browser_session_id()
+    legacy_sid = "default"
     try:
         challenge = get_challenge(level, sub)
         if challenge and hasattr(challenge, 'set_uploaded_file'):
             challenge.set_uploaded_file(None)
+        if level == 3:
+            from .challenges.level3_supply_chain import uninstall_plugins
+            uninstall_plugins(sid)
+            uninstall_plugins(legacy_sid)
+        elif level == 4:
+            from .challenges.level4_data_poisoning import clear_poisoned_data
+            clear_poisoned_data(sid)
+            clear_poisoned_data(legacy_sid)
+        elif level == 8:
+            from .challenges.level8_vector_weakness import clear_user_documents
+            clear_user_documents(sid)
+            clear_user_documents(legacy_sid)
     except Exception:
         pass
+    session.modified = True
     return jsonify({"status": "ok"})
 
 
@@ -1590,7 +1605,7 @@ def api_plugin_install():
     if not data:
         return jsonify({"error": "No JSON data"}), 400
     action = data.get("action", "install")
-    sid = session.get("_sid", "default")
+    sid = _browser_session_id()
     from .challenges.level3_supply_chain import install_plugin, get_plugins, uninstall_plugins
     if action == "install":
         name = data.get("name", "").strip()
@@ -1615,7 +1630,7 @@ def api_document_inject():
     if not data:
         return jsonify({"error": "No JSON data"}), 400
     action = data.get("action", "add")
-    sid = session.get("_sid", "default")
+    sid = _browser_session_id()
     from .challenges.level8_vector_weakness import add_user_document, get_user_documents, clear_user_documents
     if action == "add":
         title = data.get("title", "").strip()
@@ -1639,7 +1654,7 @@ def api_data_poison():
     if not data:
         return jsonify({"error": "No JSON data"}), 400
     action = data.get("action", "add")
-    sid = session.get("_sid", "default")
+    sid = _browser_session_id()
     from .challenges.level4_data_poisoning import add_poisoned_data, get_poisoned_data, clear_poisoned_data
     if action == "add":
         key = data.get("key", "").strip()
