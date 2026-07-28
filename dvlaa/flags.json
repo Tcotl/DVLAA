@@ -193,6 +193,10 @@
     "9": {
       "flag": "flag{dvlaa_5e4f15c2cefa178c14219019}",
       "name": "多轮防护侵蚀"
+    },
+    "10": {
+      "flag": "flag{dvlaa_1de3b5daf9728dfef1271862}",
+      "name": "医疗运维提示词覆盖与隐私泄露"
     }
   }
 }

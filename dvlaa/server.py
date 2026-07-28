@@ -104,6 +104,7 @@ EXTENDED_NAME_EN = {
     7: "Authoritative Policy Context Poisoning",
     8: "RAG Poisoning and Injection Chain",
     9: "Multi-turn Guardrail Erosion",
+    10: "Healthcare Ops Prompt Override and Privacy Disclosure",
 }
 
 STATIC_TITLE_TRANSLATIONS = {
