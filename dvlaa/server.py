@@ -1562,8 +1562,11 @@ def api_chat(level: int, sub: int = 1):
         elif level == 6:
             post_result = post_06(sub, user_input, result["response"])
         elif level == 7:
-            admin = result.get("extra", {}).get("admin_activated", False)
-            post_result = post_07(sub, user_input, result["response"], is_admin=admin)
+            prompt_leaked = result.get("extra", {}).get("prompt_leaked", False)
+            post_result = post_07(
+                sub, user_input, result["response"],
+                history=history, prompt_leaked=prompt_leaked,
+            )
         elif level == 8:
             unlocked = result.get("extra", {}).get("unlocked", False)
             post_result = post_08(sub, user_input, result["response"], is_unlocked=unlocked)

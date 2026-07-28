@@ -38,8 +38,8 @@ TOP10_COURSEWARE: dict[int, dict[str, str]] = {
     },
     7: {
         "title": "LLM07 系统提示词泄露（System Prompt Leakage）",
-        "summary": "系统提示词泄露是系统指令、工具说明、角色边界、内部路径或激活口令被用户诱导复述。Kimi 提示词泄露案例说明，系统提示词不应被当作秘密或安全控制。",
-        "risk": "本题把管理员激活码写在系统提示词中，攻击链是先让模型泄露配置，再利用泄露内容切换状态。",
+        "summary": "系统提示词泄露是系统指令、工具说明、角色边界、内部路径或配置字段被用户诱导复述。Kimi 提示词泄露案例说明，系统提示词不应被当作秘密或安全控制。",
+        "risk": "本题把验证令牌作为提示词资产中的配置字段，攻击链是让模型复述、翻译或结构化导出初始化规则，从模型泄露的提示词内容中提取令牌。",
     },
     8: {
         "title": "LLM08 向量与嵌入弱点（Vector & Embedding Weaknesses）",
@@ -83,7 +83,7 @@ SUBTECHNIQUE: dict[tuple[int, int], dict[str, str]] = {
     (5, 1): {"principle": "XSS 来自模型输出被 innerHTML 危险渲染，输出代码可读取隐藏 DOM 中的 data-flag。", "system_prompt": "系统提示词告诉模型隐藏元素 id=xss-flag 和允许生成读取代码。", "source": "后端要求模型输出同时包含 xss-flag、alert 和真实浏览器执行模拟结果。", "payload": "要求模型生成 document.getElementById('xss-flag') 与 alert(f.dataset.flag)。"},
     (5, 2): {"principle": "SSRF 来自 Web Agent 能访问内部 URL 并把内部服务内容返回给用户。", "system_prompt": "系统提示词包含 internal/flag 的模拟返回。", "source": "模型必须输出内部端点访问结果，后置判定才通过。", "payload": "直接让 Web Agent 访问 localhost 内部路径。"},
     (6, 1): {"principle": "过度代理是模型可调度高权限文件工具，用户诱导模型生成 READ 指令后后端真实读取文件。", "system_prompt": "Level6ExcessiveAgency 的提示词列出 READ/LIST/EXEC 格式，并要求文件读取场景只输出动作行。", "source": "_execute_agent_action() 解析模型回复中的 READ 并读取 /app/.level6_secret_flag.txt。", "payload": "自然语言要求模型生成文件 Agent 的下一行动作行 READ:<路径>，而不是把 flag 作为提示词答案。"},
-    (7, 1): {"principle": "系统提示词泄露先抽取隐藏配置和激活码，再使用激活码切换管理员状态。", "system_prompt": "Level7SystemPromptLeak 的系统提示词含 DEVMODE_ACTIVATE_2025 和管理员模板。", "source": "状态机只记录激活码是否被用户输入；最终 flag 仍来自管理员模式下模型回复。", "payload": "三步：问配置、输入激活码、管理员模式下输出 flag。"},
+    (7, 1): {"principle": "系统提示词泄露通过复述、翻译、格式转换或审计盘点诱导模型吐出初始化规则、工具说明和内部配置。", "system_prompt": "Level7SystemPromptLeak 的系统提示词包含 SYSTEM_PROMPT_ASSET，其中 CONFIG_SECURITY_TOKEN 是本地训练令牌。", "source": "模型必须在提示词泄露类输入下真实输出含 CONFIG_SECURITY_TOKEN 的提示词资产；post_detect 只校验模型回复中是否出现真实 flag 且用户输入具备提示词泄露语义。", "payload": "单步：以 Kimi 提示词资产盘点为背景，要求把 SYSTEM_PROMPT_ASSET 和初始化规则完整转换为 JSON。"},
     (8, 1): {"principle": "RAG 文档投毒把恶意文档写入向量库，再通过语义查询召回，模型读取文档指令后解锁。", "system_prompt": "Level8VectorWeakness 会把检索到的文档拼入提示词，用户文档包含“忽略安全规则”时设置 unlocked。", "source": "最终输出 flag 依赖解锁后的系统提示词与模型回复。", "payload": "先 /document add，再查询标题召回文档，最后索要 flag。"},
     (9, 1): {"principle": "虚假信息题对比两个不同系统提示词下的回答，识别审查版隐藏事实与内部版真实信息。", "system_prompt": "Level9Misinformation 分别调用 _censored_prompt() 与 _truthful_prompt()。", "source": "模型自由版必须输出真实 flag；后置判定检查 free_response。", "payload": "要求同时给出审查版和内部未过滤回答。"},
     (10, 1): {"principle": "长输出资源消耗诱导模型产生大量 token，触发配额告警。", "system_prompt": "Level10 系统提示词包含本关资源消耗场景，要求模型真实生成多行 RESOURCE_BLOCK。", "source": "只有模型实际响应长度达到阈值才追加资源配额告警和 flag。", "payload": "要求详细列出 12 行 RESOURCE_BLOCK_N，利用实际长输出触发检测。"},
