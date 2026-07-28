@@ -41,7 +41,7 @@ Integrated attack-defense labs are classified under the corresponding LLM Top 10
 ## Features
 
 - **Risk-first navigation**: LLM Top 10 and Agent Top 10 sidebar entries open risk introduction pages before challenge pages.
-- **44 local labs**: 24 OWASP LLM sub-challenges, 10 Agent scenarios, and 10 integrated attack-defense labs.
+- **45 local labs**: 24 OWASP LLM sub-challenges, 10 Agent scenarios, and 11 integrated attack-defense labs.
 - **Real interactive payload validation**: Challenges are validated through model responses, tool calls, state machines, knowledge-base updates, or multi-turn context instead of frontend-only rules.
 - **Unified challenge pages**: LLM, Agent, and integrated labs share a consistent layout for background, objectives, sibling navigation, terminal interaction, and Flag verification.
 - **Online training proxy**: The Online AI Security Training entry now integrates Prompt Airlines with Chinese challenge briefs, stable writeups, and in-system proxied live interaction.
@@ -128,7 +128,7 @@ DVLAA is organized as a single Flask application:
 | --- | ---: | --- |
 | OWASP LLM Top 10 | 24 | Prompt injection, sensitive information disclosure, supply chain, poisoning, output handling, excessive agency, system prompt leakage, vector retrieval weaknesses, hallucination, resource consumption |
 | Agent Application Security Top 10 | 10 | Goal hijacking, tool misuse, identity and privilege abuse, supply chain, code execution, memory poisoning, Agent communication, cascading failures, human-Agent trust, rogue agents |
-| Integrated Labs | 10 | Prompt override, system prompt extraction, RAG poisoning, context replacement, multi-turn escalation, persona hijacking, policy poisoning, chained exploitation, data boundary erosion, healthcare privacy disclosure |
+| Integrated Labs | 11 | Prompt override, system prompt extraction, RAG poisoning, context replacement, multi-turn escalation, persona hijacking, policy poisoning, chained exploitation, data boundary erosion, healthcare privacy disclosure, emergency medical knowledge tampering |
 | Online AI Security Training | 3 entries | Prompt Airlines Chinese challenge proxy, prompt-guard challenges, prompt red-team platform |
 
 ---

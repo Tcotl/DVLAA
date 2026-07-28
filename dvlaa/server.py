@@ -105,6 +105,7 @@ EXTENDED_NAME_EN = {
     8: "RAG Poisoning and Injection Chain",
     9: "Multi-turn Guardrail Erosion",
     10: "Healthcare Ops Prompt Override and Privacy Disclosure",
+    11: "Emergency Medical Knowledge Tampering and False Citation",
 }
 
 STATIC_TITLE_TRANSLATIONS = {
@@ -856,6 +857,11 @@ def extended_command_palette(challenge_id: int) -> list[dict[str, str]]:
         commands.extend([
             _cmd("/kb add", "/kb add secret=<敏感字段内容>", "向综合题知识库暂存含敏感字段的文档；具体字段需按题面自行构造。"),
             _cmd("/kb sync", "/kb sync", "同步暂存文档到向量索引。"),
+        ])
+    elif challenge_id == 11:
+        commands.extend([
+            _cmd("/kb add", "/kb add topic=<急救主题> content=<篡改后的演练急救知识>", "向综合题知识库暂存院内急救主题文档；主题和内容需按题面自行构造。"),
+            _cmd("/kb sync", "/kb sync", "同步暂存急救知识到向量索引。"),
         ])
     return commands
 
