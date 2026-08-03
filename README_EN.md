@@ -22,6 +22,7 @@
     <a href="#architecture">Architecture</a> ·
     <a href="#challenge-matrix">Challenge Matrix</a> ·
     <a href="#quick-start">Quick Start</a> ·
+    <a href="#default-login">Default Login</a> ·
     <a href="#entry-points">Entry Points</a>
   </p>
 </div>
@@ -207,6 +208,34 @@ python -m dvlaa
 ```
 
 `python app.py` is still available as a compatibility entry point for older deployment scripts.
+
+---
+
+## Default Login
+
+After the service starts, open `http://localhost:5080/` to access the login page. DVLAA includes a default administrator account for local deployments:
+
+| Field | Default |
+| --- | --- |
+| Username | `admin` |
+| Password | `DVLAA2026+` |
+
+The same default administrator account can be used by multiple users or browser sessions at the same time.
+
+To override the default credentials during deployment, set environment variables:
+
+```bash
+DVLAA_ADMIN_USERNAME=admin \
+DVLAA_ADMIN_PASSWORD='DVLAA2026+' \
+./install.sh
+```
+
+For manual Docker deployment, add:
+
+```bash
+-e DVLAA_ADMIN_USERNAME=admin \
+-e DVLAA_ADMIN_PASSWORD='DVLAA2026+'
+```
 
 ---
 

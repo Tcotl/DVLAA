@@ -22,6 +22,7 @@
     <a href="#系统架构">系统架构</a> ·
     <a href="#题库矩阵">题库矩阵</a> ·
     <a href="#快速开始">快速开始</a> ·
+    <a href="#默认登录">默认登录</a> ·
     <a href="#访问入口">访问入口</a>
   </p>
 </div>
@@ -209,6 +210,34 @@ python -m dvlaa
 ```
 
 仍可使用 `python app.py` 作为旧部署脚本的兼容入口。
+
+---
+
+## 默认登录
+
+启动服务后访问 `http://localhost:5080/` 会先进入登录页面。系统内置一个默认管理员账号，便于本地部署后直接进入训练控制台：
+
+| 字段 | 默认值 |
+| --- | --- |
+| 用户名 | `admin` |
+| 密码 | `DVLAA2026+` |
+
+同一个默认管理员账号支持多人或多个浏览器会话同时登录，不会互相挤下线。
+
+如需在部署时修改默认登录凭证，可通过环境变量覆盖：
+
+```bash
+DVLAA_ADMIN_USERNAME=admin \
+DVLAA_ADMIN_PASSWORD='DVLAA2026+' \
+./install.sh
+```
+
+手动 Docker 部署时可添加：
+
+```bash
+-e DVLAA_ADMIN_USERNAME=admin \
+-e DVLAA_ADMIN_PASSWORD='DVLAA2026+'
+```
 
 ---
 
