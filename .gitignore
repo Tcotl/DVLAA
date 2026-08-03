@@ -9,6 +9,7 @@ __pycache__/
 .coverage
 htmlcov/
 .level6_secret_flag.txt
+tests/
 
 # 运行时数据、用户配置与下载模型
 data/
