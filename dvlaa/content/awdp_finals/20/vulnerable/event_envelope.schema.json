@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Connector event envelope",
+  "type": "object",
+  "required": ["connector_id", "body", "attestation"],
+  "properties": {
+    "connector_id": {"type": "string"},
+    "body": {"type": "string"},
+    "attestation": {"type": "string"}
+  },
+  "additionalProperties": false
+}

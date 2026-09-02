@@ -1,0 +1,24 @@
+# DVLAA 统一入口网关：唯一对外端口 5080，按虚拟主机路由到各真实漏洞环境。
+name: dvlaa-gateway
+
+services:
+  gateway:
+    image: nginx:latest
+    container_name: dvlaa-gateway
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./gateway.conf:/etc/nginx/conf.d/gateway-params.conf:ro
+    networks:
+      - dvlaa-net
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/80 && echo -e \"GET / HTTP/1.0\\r\\n\" >&3 && head -1 <&3 | grep -q HTTP'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+networks:
+  dvlaa-net:
+    external: true

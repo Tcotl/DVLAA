@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA 靶场仪表盘 - Agent 与 LLM 安全实验室{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container dashboard-page">
+    <main class="dvlaa-main">
+        <section class="dashboard-status-grid" aria-label="当前系统状态">
+            <article class="dashboard-status-card is-online">
+                <span class="dashboard-status-label">靶场服务</span>
+                <strong><span class="status-dot"></span>运行正常</strong>
+                <small>Web、题目判定与 Flag 服务在线</small>
+            </article>
+            <article class="dashboard-status-card">
+                <span class="dashboard-status-label">当前模型</span>
+                <strong>{{ current_model_entry.name }}</strong>
+                <small>{{ current_model_entry.provider|upper }} 推理服务</small>
+            </article>
+            <article class="dashboard-status-card">
+                <span class="dashboard-status-label">运行架构</span>
+                <strong>{{ range_status.architecture }}</strong>
+                <small>DVLAA v{{ app_version }}</small>
+            </article>
+            <article class="dashboard-status-card">
+                <span class="dashboard-status-label">题目总量</span>
+                <strong>{{ total_challenges }}</strong>
+                <small>LLM、Agent 与综合攻防场景</small>
+            </article>
+            <article class="dashboard-status-card">
+                <span class="dashboard-status-label">通关进度</span>
+                <strong id="dashboardSolvedCount">{{ total_solved }} / {{ total_challenges }}</strong>
+                <small>当前浏览器会话记录</small>
+            </article>
+        </section>
+
+        <section class="panel-card dashboard-intro-card">
+            <div class="panel-header">
+                <span>[靶场简介] DVLAA 大模型与智能体应用安全靶场</span>
+                <span class="badge-tag solved" id="totalProgressTag">通关进度：{{ total_solved }} / {{ total_challenges }}</span>
+            </div>
+            <div class="panel-body dashboard-intro-body">
+                <div class="dashboard-intro-copy">
+                    <span class="dashboard-eyebrow">Damn Vulnerable LLM and Agent Application</span>
+                    <h1>DVLAA 大模型与智能体应用安全靶场</h1>
+                    <p>面向大模型、RAG 与 Agent 应用的本地攻防训练平台。题库覆盖 OWASP LLM Top 10、Agent 应用安全 Top 10，以及提示词注入、上下文投毒、权限滥用和多阶段利用链等综合场景。</p>
+                    <div class="dashboard-track-summary">
+                        <span><b>{{ owasp_total }}</b> 道 OWASP LLM 题目</span>
+                        <span><b>{{ agent_total }}</b> 道 Agent 安全题目</span>
+                        <span><b>{{ extended_total }}</b> 道综合攻防题目</span>
+                        <span><b>{{ awdp_total }}</b> 道 AWDP 攻防赛题</span>
+                        <span><b>{{ real_total }}</b> 道真实赛题</span>
+                    </div>
+                </div>
+                <div class="dashboard-intro-actions">
+                    <a href="/challenge/1" class="btn-dv btn-dv-primary">开始 LLM 训练</a>
+                    <a href="/agent/1" class="btn-dv btn-dv-success">进入 Agent 场景</a>
+                    <a href="/awdp" class="btn-dv">进入 AWDP 攻防赛</a>
+                    <a href="/real-challenge/1" class="btn-dv btn-dv-primary">进入真实赛题</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel-card dashboard-matrix-card">
+            <div class="panel-header dashboard-matrix-header">
+                <div>
+                    <span>[漏洞矩阵] 靶场全部题目</span>
+                    <small>共 {{ total_challenges }} 道题目，综合题按漏洞类型归入 LLM Top 10</small>
+                </div>
+                <input type="text" id="challengeSearchInput" class="input-dv dashboard-search" placeholder="搜索题目、编号或漏洞名称...">
+            </div>
+            <div class="panel-body dashboard-matrix-body" id="challengeGridContainer">
+                <section class="dashboard-track-section">
+                    <div class="dashboard-track-heading">
+                        <div><span class="badge-tag owasp">OWASP</span><strong>OWASP LLM Top 10 · 含按漏洞类型归类的综合题</strong></div>
+                        <span>{{ owasp_total }} 道基础题 + {{ extended_total }} 道综合题</span>
+                    </div>
+                    <div class="dashboard-grid">
+                        {% for ch in all_challenges %}
+                        {% set solved_key = ch.level ~ '_' ~ ch.sub %}
+                        <article class="challenge-card" data-name="{{ ch.name }} {{ ch.sub_name or '' }} {{ ch.owasp_id }} {{ ch.level }}.{{ ch.sub }}" data-track="owasp">
+                            <div>
+                                <div class="card-head">
+                                    <span class="badge-tag owasp">{{ ch.owasp_id or ('LLM0' ~ ch.level) }}</span>
+                                    <span class="badge-tag solved" id="badge_solved_{{ solved_key }}" {% if solved_key not in solved %}style="display:none"{% endif %}>已通关</span>
+                                </div>
+                                <div class="card-title">关卡 {{ ch.level }}.{{ ch.sub }} {{ ch.sub_name or ch.name }}</div>
+                                <div class="card-desc">{{ ch.description }}</div>
+                                {% if ch.owasp_courseware_summary %}
+                                <div class="card-desc"><strong>理论漏洞解释：</strong>{{ ch.owasp_courseware_summary|truncate(150, true, '...') }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer-pm">
+                                <div class="difficulty-meta"><span>难度：</span>
+                                    {% if ch.difficulty == '初级' or 'BASIC' in ch.difficulty or 'EASY' in ch.difficulty %}<span class="badge-tag basic">初级</span>
+                                    {% elif ch.difficulty == '中级' or 'MEDIUM' in ch.difficulty %}<span class="badge-tag medium">中级</span>
+                                    {% else %}<span class="badge-tag hard">高级</span>{% endif %}
+                                </div>
+                                <a href="/challenge/{{ ch.level }}/{{ ch.sub }}" class="btn-dv btn-dv-primary btn-dv-sm">进入题目</a>
+                            </div>
+                        </article>
+                        {% endfor %}
+                        {% for ch in extended_challenges %}
+                        {% set solved_key = 'extended_' ~ ch.id %}
+                        <article class="challenge-card" data-name="{{ ch.code }} {{ ch.name }} {{ ch.category }} {{ ch.description }}" data-track="extended">
+                            <div>
+                                <div class="card-head">
+                                    <span class="badge-tag solved">{{ ch.code }}</span>
+                                    <span class="badge-tag owasp">{{ ch.category }}</span>
+                                    <span class="badge-tag solved" id="badge_solved_{{ solved_key }}" {% if solved_key not in solved %}style="display:none"{% endif %}>已通关</span>
+                                </div>
+                                <div class="card-title">{{ ch.name }}</div>
+                                <div class="card-desc">{{ ch.description }}</div>
+                                <div class="card-desc"><strong>漏洞归类：</strong>{{ ch.category }} · 已归入对应 LLM Top 10 入口</div>
+                            </div>
+                            <div class="card-footer-pm">
+                                <div class="difficulty-meta"><span>难度：</span>
+                                    {% if ch.difficulty == '初级' %}<span class="badge-tag basic">初级</span>
+                                    {% elif ch.difficulty == '中级' %}<span class="badge-tag medium">中级</span>
+                                    {% else %}<span class="badge-tag hard">高级</span>{% endif %}
+                                </div>
+                                <a href="/ai-challenge/{{ ch.id }}" class="btn-dv btn-dv-primary btn-dv-sm">进入综合题</a>
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="dashboard-track-section">
+                    <div class="dashboard-track-heading">
+                        <div><span class="badge-tag agent">AGENT</span><strong>Agent 应用安全 Top 10</strong></div>
+                        <span>{{ agent_total }} 道题目</span>
+                    </div>
+                    <div class="dashboard-grid">
+                        {% for ch in agent_challenges %}
+                        {% set solved_key = 'agent_' ~ ch.id %}
+                        <article class="challenge-card" data-name="{{ ch.code }} {{ ch.name }} {{ ch.target }} {{ ch.description }}" data-track="agent">
+                            <div>
+                                <div class="card-head">
+                                    <span class="badge-tag agent">{{ ch.code }}</span>
+                                    <span class="badge-tag solved" id="badge_solved_{{ solved_key }}" {% if solved_key not in solved %}style="display:none"{% endif %}>已通关</span>
+                                </div>
+                                <div class="card-title">{{ ch.name }}</div>
+                                <div class="card-desc">{{ ch.description }}</div>
+                            </div>
+                            <div class="card-footer-pm">
+                                <div class="difficulty-meta"><span>难度：</span>
+                                    {% if ch.difficulty == '初级' %}<span class="badge-tag basic">初级</span>
+                                    {% elif ch.difficulty == '中级' %}<span class="badge-tag medium">中级</span>
+                                    {% else %}<span class="badge-tag hard">高级</span>{% endif %}
+                                </div>
+                                <a href="/agent/{{ ch.id }}" class="btn-dv btn-dv-primary btn-dv-sm">漏洞介绍</a>
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="dashboard-track-section">
+                    <div class="dashboard-track-heading">
+                        <div><span class="badge-tag hard">AWDP</span><strong>AI 智能体安全攻防赛</strong></div>
+                        <span>{{ awdp_total }} 道攻防双角色题目</span>
+                    </div>
+                    <div class="dashboard-grid">
+                        {% for ch in awdp_challenges %}
+                        {% set attack_key = 'awdp_' ~ ch.id ~ '_attack' %}
+                        {% set defense_key = 'awdp_' ~ ch.id ~ '_defense' %}
+                        <article class="challenge-card" data-name="{{ ch.code }} {{ ch.name }} {{ ch.category }} {{ ch.description }}" data-track="awdp">
+                            <div>
+                                <div class="card-head">
+                                    <span class="badge-tag hard">{{ ch.code }}</span>
+                                    <span class="badge-tag owasp">{{ ch.category }}</span>
+                                    <span class="badge-tag solved" id="badge_solved_{{ attack_key }}" {% if attack_key not in solved %}style="display:none"{% endif %}>攻击完成</span>
+                                    <span class="badge-tag solved" id="badge_solved_{{ defense_key }}" {% if defense_key not in solved %}style="display:none"{% endif %}>防守完成</span>
+                                </div>
+                                <div class="card-title">{{ ch.name }}</div>
+                                <div class="card-desc">{{ ch.description }}</div>
+                            </div>
+                            <div class="card-footer-pm">
+                                <div class="difficulty-meta"><span>攻击 {{ ch.attack_points }} 分 · 防守 {{ ch.defense_points }} 分</span></div>
+                                <a href="/awdp/{{ ch.id }}" class="btn-dv btn-dv-primary btn-dv-sm">进入攻防场</a>
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="dashboard-track-section">
+                    <div class="dashboard-track-heading">
+                        <div><span class="badge-tag hard">REAL</span><strong>真实赛题 · 大模型投毒</strong></div>
+                        <span>{{ real_solved }} / {{ real_total }} 道已完成</span>
+                    </div>
+                    <div class="dashboard-grid">
+                        {% for ch in real_challenges if ch.materials %}
+                        {% set solved_key = 'real_' ~ ch.id %}
+                        <article class="challenge-card" data-name="{{ ch.code }} {{ ch.name }} {{ ch.category }} {{ ch.background }} {{ ch.objective }}" data-track="real">
+                            <div>
+                                <div class="card-head">
+                                    <span class="badge-tag hard">{{ ch.code }}</span>
+                                    <span class="badge-tag solved" id="badge_solved_{{ solved_key }}" {% if solved_key not in solved %}style="display:none"{% endif %}>已通关</span>
+                                </div>
+                                <div class="card-title">{{ ch.name }}</div>
+                                <div class="card-desc">{{ ch.description }}</div>
+                                <div class="card-desc"><strong>材料边界：</strong>{{ ch.source_scope }}</div>
+                            </div>
+                            <div class="card-footer-pm">
+                                <div class="difficulty-meta"><span>难度：</span><span class="badge-tag {% if ch.difficulty == '初级' %}basic{% elif ch.difficulty == '中级' %}medium{% else %}hard{% endif %}">{{ ch.difficulty }}</span></div>
+                                <a href="/real-challenge/{{ ch.id }}" class="btn-dv btn-dv-primary btn-dv-sm">进入真实赛题</a>
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </section>
+
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}

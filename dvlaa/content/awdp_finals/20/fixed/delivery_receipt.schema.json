@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident delivery receipt",
+  "type": "object",
+  "required": ["delivery_id", "alert_id", "connector_id"],
+  "properties": {
+    "delivery_id": {"type": "string"},
+    "alert_id": {"type": "string"},
+    "connector_id": {"type": "string"},
+    "created_at": {"type": "integer"}
+  },
+  "additionalProperties": false
+}

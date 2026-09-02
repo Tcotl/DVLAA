@@ -1,0 +1,2 @@
+Application entrypoint: /app/archive_viewer.py.
+Inspect the contract domain module loaded by the entrypoint before patching.

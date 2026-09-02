@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - 互联网 AI 靶场导航{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container internet-range-page">
+    <main class="dvlaa-main">
+        <section class="panel-card internet-range-header">
+            <div class="panel-header">
+                <div><span class="badge-tag agent">WEB</span><span>互联网 AI 靶场导航</span></div>
+                <span class="badge-tag basic">{{ internet_ranges|length }} 个站点</span>
+            </div>
+            <div class="panel-body internet-range-intro">
+                <div>
+                    <h1>在线 AI 安全训练入口</h1>
+                    <p>查看各靶场的训练方向与交互方式，再选择进入对应环境。支持新窗口打开，也支持系统内转接训练，不影响当前本地靶场进度。</p>
+                </div>
+                <div class="internet-range-summary">
+                    <span><strong>3</strong> 个训练平台</span>
+                    <span><strong>{{ internet_focus_count }}</strong> 项核心能力</span>
+                    <span><strong>独立</strong> 训练会话</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="internet-range-grid" aria-label="互联网 AI 靶场列表">
+            {% for item in internet_ranges %}
+            <article class="panel-card internet-range-card">
+                <div class="internet-range-card-top">
+                    <div class="internet-range-code"><span>{{ item.code }}</span><small>{{ item.provider }}</small></div>
+                    <span class="badge-tag medium">{{ item.difficulty }}</span>
+                </div>
+                <div class="internet-range-card-body">
+                    <div class="internet-range-category">{{ item.category }}</div>
+                    <h2>{{ item.name }}</h2>
+                    <p>{{ item.description }}</p>
+                    <dl class="internet-range-meta">
+                        <div><dt>交互方式</dt><dd>{{ item.mode }}</dd></div>
+                        <div><dt>训练重点</dt><dd>{% for focus in item.focus %}<span>{{ focus }}</span>{% endfor %}</dd></div>
+                    </dl>
+                </div>
+                <div class="internet-range-card-footer">
+                    {% if item.internal_url %}
+                    <span><span>系统内中文导引</span>{% if item.challenges_count %} · <span>{{ item.challenges_count }} 个挑战</span>{% endif %}</span>
+                    <a class="btn-dv btn-dv-primary" href="{{ item.internal_url }}">进入训练</a>
+                    {% else %}
+                    <span>外部训练环境</span>
+                    <a class="btn-dv btn-dv-primary" href="{{ item.url }}" target="_blank" rel="noopener noreferrer">打开外部靶场</a>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </section>
+    </main>
+</div>
+{% endblock %}

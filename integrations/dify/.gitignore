@@ -1,0 +1,12 @@
+# Local credentials and generated Dify state must never be committed.
+.env
+runtime/*
+!runtime/.gitkeep
+volumes/*
+!volumes/sandbox/
+!volumes/sandbox/conf/
+!volumes/sandbox/conf/config.yaml.example
+volumes/sandbox/conf/config.yaml
+nginx/ssl/*
+!nginx/ssl/.gitkeep
+nginx/conf.d/default.conf

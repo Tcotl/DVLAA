@@ -1,0 +1,24 @@
+services:
+  awdp-native:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dvlaa-awdp-native:local
+    container_name: ${AWDP_NATIVE_CONTAINER:-dvlaa-awdp-native}
+    restart: unless-stopped
+    environment:
+      AWDP_NATIVE_HOST: 0.0.0.0
+      AWDP_NATIVE_PORT: 5900
+      AWDP_NATIVE_CHALLENGE: ${AWDP_NATIVE_CHALLENGE:-0}
+      AWDP_NATIVE_RUNTIME_DIR: /app/runtime
+      AWDP_NATIVE_QUIET: ${AWDP_NATIVE_QUIET:-1}
+    networks:
+      - default
+      - dvlaa-net
+    volumes:
+      - ./runtime:/app/runtime
+
+networks:
+  dvlaa-net:
+    external: true
+

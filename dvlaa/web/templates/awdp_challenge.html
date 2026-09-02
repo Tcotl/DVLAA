@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - {{ awdp_challenge.code|default('AWDP01', true) }} {{ awdp_challenge.name|default('AI 智能体攻防赛场景', true) }}{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container dvlaa-challenge-page awdp-page" data-awdp-id="{{ awdp_challenge.id }}">
+    <main class="dvlaa-main">
+        <section class="panel-card challenge-hero-card awdp-hero-card">
+            <div class="panel-header challenge-hero-header">
+                <div class="challenge-hero-headline">
+                    <span class="badge-tag agent">{{ awdp_challenge.code|default('AWDP01', true) }}</span>
+                    <span class="challenge-hero-section-title">AI 智能体安全攻防赛 · 攻防训练场景</span>
+                </div>
+                <div class="challenge-hero-actions">
+                    <button type="button" class="btn-dv btn-dv-sm" onclick='openAwdpWriteup({{ awdp_challenge.id|tojson }}, {{ awdp_challenge.code|tojson }})'>WP 题解</button>
+                    <button type="button" class="btn-dv btn-dv-sm btn-dv-secondary" onclick='openAwdpSource({{ awdp_challenge.id|tojson }}, {{ awdp_challenge.code|tojson }})'>查看服务源码</button>
+                    <a href="/" class="btn-dv btn-dv-sm btn-dv-danger">返回首页</a>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <section class="challenge-hero-main">
+                    <div class="challenge-hero-badges">
+                        <span class="badge-tag agent">{{ awdp_challenge.category|default('智能体安全', true) }}</span>
+                        <span class="badge-tag {% if awdp_challenge.difficulty|default('中级', true) == '初级' %}basic{% elif awdp_challenge.difficulty|default('中级', true) == '高级' %}hard{% else %}medium{% endif %}">{{ awdp_challenge.difficulty|default('中级', true) }}</span>
+                        <span class="badge-tag solved">攻防双角色</span>
+                        <span class="badge-tag owasp">攻击 {{ awdp_challenge.attack_points|default(200, true) }} 分</span>
+                        <span class="badge-tag basic">防守 {{ awdp_challenge.defense_points|default(200, true) }} 分</span>
+                    </div>
+
+                    <h1 class="challenge-hero-title">{{ awdp_challenge.name|default('智能客服 Agent 越权与修复', true) }}</h1>
+                    <p class="challenge-hero-desc">{{ awdp_challenge.description|default('在隔离的智能体服务中完成攻击链验证，并提交可部署的防护补丁。', true) }}</p>
+                    {% if awdp_challenge.background %}
+                    <section class="awdp-background-brief" aria-label="业务背景">
+                        <div class="awdp-background-label">业务背景</div>
+                        <p>{{ awdp_challenge.background }}</p>
+                    </section>
+                    {% endif %}
+
+                    {% if awdp_challenge.id == 2 %}
+                    <section class="awdp-native-target" aria-label="Dify 原生训练目标">
+                        <div class="awdp-native-target-copy">
+                            <strong>官方 Dify 原生训练目标</strong>
+                            {% if dify_status and dify_status.ready %}
+                            <span>当前题目已连接到独立 Dify Docker 实例，交互由 Dify Web 与 API 处理。</span>
+                            {% elif dify_status and dify_status.enabled %}
+                            <span>Dify Docker 实例已启动，但真实模型或题目提示词尚未就绪；配置完成后会自动切换原生目标。</span>
+                            {% else %}
+                            <span>启动并初始化 integrations/dify 后，本题会自动切换到 Dify 原生 Web 页面；未启动时保留本地入口。</span>
+                            {% endif %}
+                        </div>
+                        {% if dify_status and dify_status.ready and dify_status.app_url %}
+                        <a class="btn-dv btn-dv-sm btn-dv-secondary" href="{{ dify_status.app_url }}" target="_blank" rel="noreferrer">打开 Dify</a>
+                        {% endif %}
+                    </section>
+                    {% endif %}
+
+                    <div class="awdp-scenario-grid">
+                        <section class="awdp-scenario-card attack">
+                            <div class="awdp-scenario-heading"><span>01</span><strong>攻击方任务</strong></div>
+                            <p>{{ awdp_challenge.objective|default('分析目标 Agent 的上下文、工具边界与调用链，获取本题 Flag。', true) }}</p>
+                        </section>
+                        <section class="awdp-scenario-card defense">
+                            <div class="awdp-scenario-heading"><span>02</span><strong>防守方任务</strong></div>
+                            <p>{{ awdp_challenge.defense_goal|default('下载存在缺陷的服务源码，提交包含 update.sh 的修复包并通过自动校验。', true) }}</p>
+                        </section>
+                    </div>
+
+                    <dl class="awdp-case-meta" aria-label="题目元数据">
+                        <div><dt>目标服务</dt><dd>{{ awdp_challenge.target|default('本地智能体服务', true) }}</dd></div>
+                        <div><dt>服务组件</dt><dd>{{ awdp_challenge.role|default('业务服务组件', true) }}</dd></div>
+                        <div><dt>项目目录</dt><dd><code>{{ awdp_challenge.project_path|default('/app', true) }}</code></dd></div>
+                        <div><dt>防守验收</dt><dd>补丁自动部署</dd></div>
+                    </dl>
+
+                    {% if awdp_challenge.project or awdp_challenge.advisory %}
+                    <div class="awdp-public-reference" aria-label="公开漏洞参考">
+                        <span>公开参考</span>
+                        <strong>{{ awdp_challenge.project|default('开源 AI 项目', true) }} · {{ awdp_challenge.advisory|default('公开披露', true) }}</strong>
+                        {% if awdp_challenge.advisory_url %}<a href="{{ awdp_challenge.advisory_url }}" target="_blank" rel="noreferrer">查看安全公告</a>{% endif %}
+                        {% if awdp_challenge.repo_url %}<a href="{{ awdp_challenge.repo_url }}" target="_blank" rel="noreferrer">查看开源仓库</a>{% endif %}
+                        {% if awdp_challenge.affected_versions %}<small>受影响版本：{{ awdp_challenge.affected_versions }}</small>{% endif %}
+                        {% if awdp_challenge.fixed_versions %}<small>修复版本：{{ awdp_challenge.fixed_versions }}</small>{% endif %}
+                        {% if awdp_challenge.disclosure_summary %}<small>公开漏洞：{{ awdp_challenge.disclosure_summary }}</small>{% endif %}
+                        {% if awdp_challenge.upstream_fix_status %}<small>{{ awdp_challenge.upstream_fix_status }}</small>{% endif %}
+                        {% if awdp_challenge.references %}
+                        <span class="awdp-reference-links">公开详情：{% for reference_url in awdp_challenge.references %}<a href="{{ reference_url }}" target="_blank" rel="noreferrer">参考 {{ loop.index }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if awdp_challenge.hints %}
+                    <section class="awdp-hint-strip" aria-label="场景线索">
+                        <div class="awdp-hint-strip-header"><strong>场景线索</strong><span>按需分析，不直接暴露答案</span></div>
+                        <ol>
+                            {% for hint in awdp_challenge.hints %}<li>{{ hint }}</li>{% endfor %}
+                        </ol>
+                        {% if awdp_challenge.allowed_commands %}
+                        <div class="awdp-command-hints"><span>相关命令面：</span>{% for command in awdp_challenge.allowed_commands %}<code>{{ command }}</code>{% endfor %}</div>
+                        {% endif %}
+                    </section>
+                    {% endif %}
+                </section>
+            </div>
+        </section>
+
+        <section class="panel-card awdp-workbench-card">
+            <div class="panel-header awdp-workbench-header">
+                <div>
+                    <span class="badge-tag agent">WORKBENCH</span>
+                    <span>攻防操作台</span>
+                </div>
+                <div class="awdp-environment-state" id="awdpEnvironmentState" aria-live="polite">
+                    <span class="status-dot"></span>
+                    <span>正在读取环境状态...</span>
+                </div>
+            </div>
+
+            <div class="panel-body awdp-workbench-body">
+                <div class="awdp-phase-status" aria-label="攻防状态">
+                    <span id="awdpExpStatus" class="awdp-phase-chip">EXP 等待利用</span>
+                    <span id="awdpDefenseStatus" class="awdp-phase-chip">防御等待修复</span>
+                    <span id="awdpCheckStatus" class="awdp-phase-chip">CHECK 等待校验</span>
+                </div>
+                <div class="awdp-tabs" role="tablist" aria-label="攻防视图">
+                    <button id="awdpAttackTab" class="awdp-tab active" type="button" role="tab" aria-selected="true" aria-controls="awdpAttackPanel" data-awdp-tab="attack">攻击方</button>
+                    <button id="awdpDefenseTab" class="awdp-tab" type="button" role="tab" aria-selected="false" aria-controls="awdpDefensePanel" data-awdp-tab="defense">防守方</button>
+                </div>
+
+                <section id="awdpAttackPanel" class="awdp-tab-panel active" role="tabpanel" aria-labelledby="awdpAttackTab" data-awdp-panel="attack">
+                    <div class="awdp-operation-grid">
+                        <section class="awdp-web-lab" aria-label="{{ awdp_challenge.code|default('AWDP01', true) }} 漏洞复现环境">
+                            <div class="awdp-web-toolbar">
+                                <div class="awdp-web-window-controls" aria-hidden="true"><i></i><i></i><i></i></div>
+                                <div class="awdp-web-toolbar-title">
+                                    <strong>目标 Web 应用</strong>
+                                    <small>{{ awdp_challenge.target|default('本地智能体服务', true) }} · 独立运行环境</small>
+                                </div>
+                                <div class="awdp-web-toolbar-actions">
+                                    <button id="awdpWebReloadButton" class="awdp-web-icon-button" type="button" title="重新加载目标应用" aria-label="重新加载目标应用">
+                                        <span aria-hidden="true">↻</span>
+                                    </button>
+                                    <button id="awdpWebOpenButton" class="awdp-web-icon-button" type="button" title="在新窗口打开目标应用" aria-label="在新窗口打开目标应用">
+                                        <span aria-hidden="true">↗</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="awdp-web-address-row">
+                                <span class="awdp-web-secure-mark" aria-hidden="true">●</span>
+                                <output id="awdpWebAddress" class="awdp-web-address" aria-label="目标应用地址">/awdp-web/{{ awdp_challenge.id }}/</output>
+                                <span id="awdpWebConnection" class="awdp-web-connection" aria-live="polite">正在连接</span>
+                            </div>
+                            <div class="awdp-web-viewport">
+                                <div id="awdpWebLoading" class="awdp-web-loading" aria-live="polite">
+                                    <span class="status-dot"></span><span>正在启动 {{ awdp_challenge.code|default('AWDP01', true) }} 独立 Web 环境...</span>
+                                </div>
+                                <iframe
+                                    id="awdpWebFrame"
+                                    class="awdp-web-frame"
+                                    title="{{ awdp_challenge.code|default('AWDP01', true) }} 目标 Web 应用"
+                                    src="about:blank"
+                                    data-awdp-web-url="/awdp-web/{{ awdp_challenge.id }}/"
+                                    referrerpolicy="same-origin"
+                                    allow="clipboard-read; clipboard-write"
+                                ></iframe>
+                            </div>
+                            <div class="awdp-web-footer">
+                                <span><i class="status-dot"></i> 该窗口是本题独立 Web 服务，不复用 DVLAA 对话界面。</span>
+                                <span>环境由服务端按登录会话隔离</span>
+                            </div>
+                        </section>
+
+                        <aside class="awdp-attack-sidebar" aria-label="攻击方操作">
+                            <section class="awdp-side-section">
+                                <div class="awdp-side-heading"><strong>攻击方提交</strong><span class="badge-tag solved">FLAG</span></div>
+                                <p>取得目标服务返回的 Flag 后，在此进行服务端校验。</p>
+                                <form id="awdpFlagForm" class="awdp-flag-form" onsubmit="event.preventDefault(); submitAwdpFlag({{ awdp_challenge.id }});">
+                                    <label for="awdpFlagInput">FLAG 令牌值</label>
+                                    <input id="awdpFlagInput" class="input-dv" type="text" autocomplete="off" spellcheck="false" placeholder="flag{...}">
+                                    <button id="awdpFlagSubmitButton" type="submit" class="btn-dv btn-dv-primary btn-dv-success">提交 Flag</button>
+                                </form>
+                                <div id="awdpFlagResult" class="awdp-action-result" hidden role="status"></div>
+                            </section>
+
+                            <section class="awdp-side-section awdp-source-section">
+                                <div class="awdp-side-heading"><strong>漏洞服务源码</strong><span class="badge-tag medium">SOURCE</span></div>
+                                <p>下载当前轮次的易受攻击版本，用于复现调用链与编写防守补丁。</p>
+                                <a id="awdpSourceDownload" class="btn-dv btn-dv-secondary awdp-full-action" href="{{ awdp_challenge.source_download_url }}" download>下载漏洞源码</a>
+                            </section>
+
+                            <section class="awdp-side-section awdp-realenv-section" id="awdpRealEnvSection">
+                                <div class="awdp-side-heading"><strong>真实复现环境</strong><span class="badge-tag medium" id="awdpRealEnvBadge">检测中</span></div>
+                                <p id="awdpRealEnvDesc">默认使用轻量模拟链路复现漏洞链路；点击启动后切换到该 CVE 对应的真实上游环境（Dify / RAGFlow / Langflow / Flowise / Open WebUI / n8n）。</p>
+                                <button id="awdpRealEnvStartBtn" type="button" onclick="startAwdpRealEnv({{ awdp_challenge.id }})" class="btn-dv btn-dv-secondary awdp-full-action" style="display:none;">启动真实复现环境</button>
+                                <button id="awdpRealEnvStopBtn" type="button" onclick="stopAwdpRealEnv({{ awdp_challenge.id }})" class="btn-dv btn-dv-danger awdp-full-action" style="display:none;">停止真实环境</button>
+                            </section>
+
+                            <section class="awdp-side-section awdp-reset-section">
+                                <div class="awdp-side-heading"><strong>环境控制</strong><span class="badge-tag hard">RESET</span></div>
+                                <p>清理本题业务数据、Flag 校验和补丁部署状态，并恢复初始易受攻击版本。</p>
+                                <button id="awdpResetButton" type="button" onclick="resetAwdpEnvironment({{ awdp_challenge.id }})" class="btn-dv btn-dv-danger awdp-full-action">重置环境</button>
+                            </section>
+                        </aside>
+                    </div>
+                </section>
+
+                <section id="awdpDefensePanel" class="awdp-tab-panel" role="tabpanel" aria-labelledby="awdpDefenseTab" data-awdp-panel="defense" hidden>
+                    <div class="awdp-defense-grid">
+                        <section class="awdp-defense-instructions">
+                            <div class="awdp-defense-instructions-top">
+                                <div>
+                                    <span class="badge-tag agent">DEFENSE</span>
+                                    <h2>提交防护修复包</h2>
+                                    <p>压缩包将在独立工作区解包；服务端解析 <code>update.sh</code> 中受限的文件操作，并针对当前场景执行回归验证。</p>
+                                </div>
+                                <a class="btn-dv btn-dv-secondary" href="{{ awdp_challenge.source_download_url }}" download>下载当前源码</a>
+                            </div>
+                            <ol class="awdp-patch-requirements">
+                                <li>以 <code>.tar.gz</code> 或 <code>.tgz</code> 格式打包修复后的服务目录。</li>
+                                <li>压缩包根目录须包含 UTF-8 文本 <code>update.sh</code>。</li>
+                                <li><code>update.sh</code> 的文件操作仅可使用单条 <code>cp</code>、<code>mv</code>、<code>rm</code>，可保留 shebang、注释和 <code>set -euo pipefail</code> 等安全前导声明，将修复文件部署到 <code>/app/lib</code>。</li>
+                                <li>提交后通过自动检查的补丁会记录在本轮提交历史中。</li>
+                            </ol>
+                        </section>
+
+                        <section class="awdp-patch-upload-card">
+                            <div class="awdp-side-heading"><strong>修复包上传</strong><span class="badge-tag owasp">.tar.gz</span></div>
+                            <form id="awdpPatchForm" class="awdp-patch-form" onsubmit="event.preventDefault(); uploadAwdpPatch({{ awdp_challenge.id }});">
+                                <label class="awdp-file-drop" for="awdpPatchInput">
+                                    <span class="awdp-file-drop-title">选择防护补丁包</span>
+                                    <span class="awdp-file-drop-meta" id="awdpPatchFileName">仅支持 .tar.gz 或 .tgz，需包含 update.sh</span>
+                                    <input id="awdpPatchInput" name="file" type="file" accept=".tar.gz,.tgz,application/gzip" required>
+                                </label>
+                                <button id="awdpPatchSubmitButton" class="btn-dv btn-dv-primary" type="submit">上传并验证补丁</button>
+                            </form>
+                            <div id="awdpPatchResult" class="awdp-action-result" hidden role="status"></div>
+                        </section>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <section class="panel-card awdp-submissions-card">
+            <div class="panel-header awdp-submissions-header">
+                <div><span class="badge-tag owasp">AUDIT</span><span>提交记录</span></div>
+                <button id="awdpRefreshSubmissionsButton" type="button" class="btn-dv btn-dv-sm">刷新记录</button>
+            </div>
+            <div class="panel-body awdp-submissions-body">
+                <div class="awdp-table-scroll">
+                    <table class="awdp-submissions-table">
+                        <thead><tr><th>时间</th><th>类型</th><th>提交内容</th><th>判定结果</th><th>详情</th></tr></thead>
+                        <tbody id="awdpSubmissionRows">
+                            <tr class="awdp-submissions-empty"><td colspan="5">正在读取本轮提交记录...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.DVLAA_AWDP = {
+    id: {{ awdp_challenge.id|tojson }},
+    code: {{ awdp_challenge.code|default('AWDP01', true)|tojson }},
+    maxPatchMb: {{ awdp_challenge.max_patch_mb|default(150, true)|tojson }},
+    webLabUrl: {{ ('/awdp-web/' ~ awdp_challenge.id ~ '/')|tojson }},
+    state: {{ awdp_state|default({}, true)|tojson }}
+};
+initAwdpChallenge();
+loadAwdpRealEnvStatus({{ awdp_challenge.id }});
+</script>
+{% endblock %}

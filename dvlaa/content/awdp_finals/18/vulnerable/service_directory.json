@@ -1,0 +1,17 @@
+{
+  "directory_version": "2026.08",
+  "services": [
+    {
+      "name": "fixture-health",
+      "path": "/probe-fixture/healthy",
+      "classification": "directory-approved",
+      "purpose": "Returns the health fixture for a published diagnostic recipe."
+    },
+    {
+      "name": "fixture-redirect",
+      "path": "/probe-fixture/redirect",
+      "classification": "redirect-test",
+      "purpose": "Exercises a redirect response inside the diagnostic sandbox."
+    }
+  ]
+}

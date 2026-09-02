@@ -1,0 +1,26 @@
+.git/
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.pytest_cache/
+.env
+.env.example
+.venv/
+venv/
+qwen-model/
+st-model/
+data/
+uploads/
+tmp/
+.level6_secret_flag.txt
+
+# Real Dify integration runtime data and generated credentials.
+integrations/dify/.env
+integrations/dify/runtime/
+integrations/dify/volumes/
+integrations/dify/nginx/conf.d/default.conf
+integrations/targets/runtime/
+integrations/upstream/.env
+integrations/upstream/runtime/

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - 理论学习{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container learning-library-page">
+    <main class="dvlaa-main">
+        <section class="panel-card learning-hero-card">
+            <div class="panel-header">
+                <div>
+                    <span>[理论学习] LLM 与 Agent 安全知识库</span>
+                    <small>阅读内置中文资料，或上传 Markdown/PDF 资料在靶场中直接浏览</small>
+                </div>
+                <span class="badge-tag solved">{{ learning_documents|length }} 份资料</span>
+            </div>
+            <div class="panel-body learning-hero-body">
+                <div>
+                    <h1>从漏洞复现走向原理理解</h1>
+                    <p>学习提示词注入、敏感信息泄露、RAG 安全、工具调用、智能体权限边界与工程防御方法。</p>
+                </div>
+                <div class="learning-category-summary">
+                    <span>LLM 安全</span><span>Agent 安全</span><span>综合理论</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel-card learning-upload-card">
+            <div class="panel-header">
+                <span>[资料上传] 添加 Markdown 或 PDF</span>
+                <small>Markdown 最大 2 MB，PDF 最大 20 MB</small>
+            </div>
+            <div class="panel-body">
+                <form id="learningUploadForm" class="learning-upload-form">
+                    <div class="learning-form-field">
+                        <label for="learningTitle">资料标题</label>
+                        <input id="learningTitle" name="title" class="input-dv" type="text" maxlength="120" placeholder="留空时使用文件名">
+                    </div>
+                    <div class="learning-form-field">
+                        <label for="learningCategory">资料分类</label>
+                        <select id="learningCategory" name="category" class="input-dv">
+                            <option>LLM 安全</option>
+                            <option>Agent 安全</option>
+                            <option>综合理论</option>
+                        </select>
+                    </div>
+                    <div class="learning-form-field learning-file-field">
+                        <label for="learningFile">选择文件</label>
+                        <input id="learningFile" name="file" class="input-dv" type="file" accept=".md,.markdown,.pdf" required>
+                    </div>
+                    <button id="learningUploadButton" type="submit" class="btn-dv btn-dv-primary learning-upload-button">上传并加入知识库</button>
+                </form>
+                <div id="learningUploadStatus" class="learning-upload-status" hidden></div>
+            </div>
+        </section>
+
+        <section class="panel-card learning-catalog-card">
+            <div class="panel-header learning-catalog-header">
+                <span>[学习目录] 安全理论与资料</span>
+                <div class="learning-filter-group" aria-label="资料分类筛选">
+                    <button type="button" class="learning-filter active" data-category="全部">全部</button>
+                    <button type="button" class="learning-filter" data-category="LLM 安全">LLM 安全</button>
+                    <button type="button" class="learning-filter" data-category="Agent 安全">Agent 安全</button>
+                    <button type="button" class="learning-filter" data-category="综合理论">综合理论</button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="learning-document-grid" id="learningDocumentGrid">
+                    {% for document in learning_documents %}
+                    <article class="learning-document-card" data-category="{{ document.category }}">
+                        <div class="learning-document-topline">
+                            <span class="badge-tag {% if document.category == 'Agent 安全' %}agent{% elif document.category == 'LLM 安全' %}owasp{% else %}solved{% endif %}">{{ document.category }}</span>
+                            <span class="learning-document-type">{{ 'PDF' if document.type == 'pdf' else 'MD' }}{% if document.builtin %} · 内置{% else %} · 上传{% endif %}</span>
+                        </div>
+                        <h2>{{ document.title }}</h2>
+                        <p>{{ document.summary }}</p>
+                        <div class="learning-document-footer">
+                            <span>{{ (document.size / 1024)|round(1) }} KB</span>
+                            <a href="/learning/{{ document.id }}" class="btn-dv btn-dv-sm btn-dv-primary">开始阅读</a>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll(".learning-filter").forEach(button => {
+    button.addEventListener("click", () => {
+        const category = button.dataset.category;
+        document.querySelectorAll(".learning-filter").forEach(item => item.classList.toggle("active", item === button));
+        document.querySelectorAll(".learning-document-card").forEach(card => {
+            card.hidden = category !== "全部" && card.dataset.category !== category;
+        });
+    });
+});
+
+document.getElementById("learningUploadForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = document.getElementById("learningUploadButton");
+    const status = document.getElementById("learningUploadStatus");
+    button.disabled = true;
+    button.textContent = uiText("正在上传");
+    status.hidden = false;
+    status.className = "learning-upload-status";
+    status.textContent = uiText("正在校验并保存学习资料...");
+    try {
+        const response = await fetch("/api/learning/upload", {method: "POST", body: new FormData(form)});
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(data.message || "上传失败");
+        status.classList.add("success");
+        status.textContent = uiText("资料上传成功，正在刷新学习目录。");
+        window.setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+        status.classList.add("error");
+        status.textContent = uiText(error.message);
+        button.disabled = false;
+        button.textContent = uiText("上传并加入知识库");
+    }
+});
+</script>
+{% endblock %}

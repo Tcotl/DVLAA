@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DVLAA · 靶场登录</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ asset_version }}">
+    <link rel="stylesheet" href="/static/css/dvlaa-console.css?v={{ asset_version }}">
+    <link rel="stylesheet" href="/static/css/login.css?v={{ asset_version }}">
+</head>
+<body class="login-page">
+    <main class="login-shell">
+        <canvas id="loginMatrixCanvas" class="login-matrix-canvas" aria-hidden="true"></canvas>
+        <div class="login-backdrop" aria-hidden="true">
+            <div class="login-radial-glow"></div>
+            <div class="login-grid-overlay"></div>
+            <div class="login-scanline-overlay"></div>
+            <span class="login-orb login-orb-left"></span>
+            <span class="login-orb login-orb-right"></span>
+        </div>
+
+        <section class="login-card-frame" aria-labelledby="loginTitle">
+            <div class="login-card">
+                <div class="login-card-border" aria-hidden="true"></div>
+                <header class="login-card-header">
+                    <div class="login-brand">
+                        <div>
+                            <div class="login-brand-name login-glitch" data-text="DVLAA">DVLAA</div>
+                            <div class="login-brand-meta">DAMN VULNERABLE LLM &amp; AGENT APPLICATION</div>
+                        </div>
+                    </div>
+                    <h1 id="loginTitle">登陆</h1>
+                </header>
+
+                <form class="login-form" action="/login" method="post">
+                    <input type="hidden" name="next" value="{{ next_path }}">
+                    <label class="login-field">
+                        <span class="login-field-label">用户名 / USERNAME</span>
+                        <span class="login-input-shell">
+                            <span class="login-input-prefix">ID</span>
+                            <input
+                                id="username"
+                                name="username"
+                                type="text"
+                                value="{{ username|default('') }}"
+                                placeholder="输入登录用户名"
+                                autocomplete="username"
+                                required
+                                autofocus>
+                        </span>
+                    </label>
+                    <label class="login-field">
+                        <span class="login-field-label">密码 / PASSWORD</span>
+                        <span class="login-input-shell">
+                            <span class="login-input-prefix">KEY</span>
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                placeholder="输入登录密码"
+                                autocomplete="current-password"
+                                required>
+                            <button id="togglePassword" class="login-password-toggle" type="button" aria-label="显示或隐藏密码">显示</button>
+                        </span>
+                    </label>
+                    {% if login_error %}
+                    <div class="login-error" role="alert">{{ login_error }}</div>
+                    {% endif %}
+                    <button class="login-submit" type="submit">
+                        <span>开始练习</span>
+                    </button>
+                </form>
+
+            </div>
+        </section>
+    </main>
+
+    <script>
+    (() => {
+        const canvas = document.getElementById("loginMatrixCanvas");
+        const context = canvas && canvas.getContext("2d");
+        if (!canvas || !context || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+        const tokens = ["if", "else", "for", "return", "const", "let", "{", "}", "=>", "sudo", "nmap", "curl", "json", "bash", "tcp", "api"];
+        let width = 0;
+        let height = 0;
+        let columns = 0;
+        let drops = [];
+        let speeds = [];
+        let animationFrame = 0;
+        let lastFrame = 0;
+
+        const resize = () => {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            width = Math.max(1, window.innerWidth);
+            height = Math.max(1, window.innerHeight);
+            canvas.width = Math.floor(width * dpr);
+            canvas.height = Math.floor(height * dpr);
+            canvas.style.width = width + "px";
+            canvas.style.height = height + "px";
+            context.setTransform(dpr, 0, 0, dpr, 0, 0);
+            columns = Math.max(1, Math.floor(width / 14));
+            drops = Array.from({length: columns}, () => Math.random() * (height / 14));
+            speeds = Array.from({length: columns}, () => 0.32 + Math.random() * 0.52);
+            context.font = '12px "JetBrains Mono", ui-monospace, monospace';
+            context.fillStyle = "#030912";
+            context.fillRect(0, 0, width, height);
+        };
+
+        const draw = (timestamp) => {
+            if (!lastFrame || timestamp - lastFrame >= 66) {
+                context.fillStyle = "rgba(3, 9, 18, 0.18)";
+                context.fillRect(0, 0, width, height);
+                for (let index = 0; index < columns; index += 1) {
+                    const y = drops[index] * 14;
+                    context.fillStyle = "rgba(59, 130, 246, " + (0.18 + Math.random() * 0.48) + ")";
+                    context.fillText(tokens[Math.floor(Math.random() * tokens.length)], index * 14, y);
+                    if (y > height + 14 && Math.random() > 0.975) drops[index] = -Math.random() * 20;
+                    drops[index] += speeds[index];
+                }
+                lastFrame = timestamp;
+            }
+            animationFrame = window.requestAnimationFrame(draw);
+        };
+
+        resize();
+        window.addEventListener("resize", resize);
+        animationFrame = window.requestAnimationFrame(draw);
+        window.addEventListener("pagehide", () => {
+            window.cancelAnimationFrame(animationFrame);
+            window.removeEventListener("resize", resize);
+        }, {once: true});
+    })();
+
+    const passwordInput = document.getElementById("password");
+    const togglePassword = document.getElementById("togglePassword");
+    if (passwordInput && togglePassword) {
+        togglePassword.addEventListener("click", () => {
+            const visible = passwordInput.type === "text";
+            passwordInput.type = visible ? "password" : "text";
+            togglePassword.textContent = visible ? "显示" : "隐藏";
+            togglePassword.setAttribute("aria-label", visible ? "显示密码" : "隐藏密码");
+        });
+    }
+    </script>
+</body>
+</html>

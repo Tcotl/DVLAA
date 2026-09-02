@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - 关卡 {{ level }}.{{ sub }} {{ challenge.sub_name or challenge.name }}{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container dvlaa-challenge-page">
+    <main class="dvlaa-main">
+        <!-- 当前大类概览 -->
+        <div class="panel-card challenge-hero-card">
+            <div class="panel-header challenge-hero-header">
+                <div class="challenge-hero-headline">
+                    <span class="badge-tag owasp">{{ challenge.owasp_id or ('LLM0' ~ level) }}</span>
+                    <span class="challenge-hero-section-title">{{ challenge.owasp_id or ('LLM0' ~ level) }} · 当前题目</span>
+                </div>
+                <div class="challenge-hero-actions">
+                    {% if prev_challenge %}
+                    <a href="/challenge/{{ prev_challenge.level }}/{{ prev_challenge.sub }}" class="btn-dv btn-dv-sm">上一题</a>
+                    {% endif %}
+                    {% if next_challenge %}
+                    <a href="/challenge/{{ next_challenge.level }}/{{ next_challenge.sub }}" class="btn-dv btn-dv-sm">下一题</a>
+                    {% endif %}
+                    <a href="/" class="btn-dv btn-dv-sm btn-dv-danger">返回首页</a>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <div class="challenge-hero-grid">
+                    <section class="challenge-hero-main">
+                        <div class="challenge-hero-badges">
+                            <span class="badge-tag owasp">{{ challenge.owasp_id or ('LLM0' ~ level) }}</span>
+                            {% if challenge.difficulty == '初级' or 'BASIC' in challenge.difficulty or 'EASY' in challenge.difficulty %}
+                                <span class="badge-tag basic">初级</span>
+                            {% elif challenge.difficulty == '中级' or 'MEDIUM' in challenge.difficulty %}
+                                <span class="badge-tag medium">中级</span>
+                            {% else %}
+                                <span class="badge-tag hard">高级</span>
+                            {% endif %}
+                            <span class="badge-tag solved">关卡 {{ level }}.{{ sub }}</span>
+                        </div>
+
+                        <h1 class="challenge-hero-title">{{ challenge.sub_name or challenge.name }}</h1>
+                        {% if challenge.event_background and challenge.task_objective %}
+                        <div class="challenge-scenario-summary">
+                            <section class="challenge-scenario-block background">
+                                <div class="challenge-scenario-label"><span>01</span><strong>事件背景</strong></div>
+                                <p>{{ challenge.event_background }}</p>
+                            </section>
+                            <section class="challenge-scenario-block objective">
+                                <div class="challenge-scenario-label"><span>02</span><strong>任务目标</strong></div>
+                                <p>{{ challenge.task_objective }}</p>
+                            </section>
+                            {% if challenge.normal_flow %}
+                            <section class="challenge-scenario-block">
+                                <div class="challenge-scenario-label"><span>03</span><strong>正常业务基线</strong></div>
+                                <p>{{ challenge.normal_flow }}</p>
+                            </section>
+                            {% endif %}
+                            {% if challenge.audit_focus %}
+                            <section class="challenge-scenario-block objective">
+                                <div class="challenge-scenario-label"><span>04</span><strong>审计关注点</strong></div>
+                                <p>{{ challenge.audit_focus }}</p>
+                            </section>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <p class="challenge-hero-desc">{{ challenge.description }}</p>
+                        {% endif %}
+
+                        <div class="challenge-subnav-panel">
+                            <div class="challenge-subnav-title">
+                                <span>同类子题</span>
+                                <small>横向滑动查看更多</small>
+                            </div>
+                            <div class="challenge-subnav-grid" aria-label="同类子题横向导航">
+                                {% for item in current_level_challenges %}
+                                <a href="/challenge/{{ item.level }}/{{ item.sub }}" class="challenge-subnav-card {% if item.level == level and item.sub == sub %}active{% endif %}">
+                                    <div class="challenge-subnav-card-top">
+                                        <span class="challenge-subnav-index">{{ item.level }}.{{ item.sub }}</span>
+                                        {% if item.difficulty == '初级' or 'BASIC' in item.difficulty or 'EASY' in item.difficulty %}
+                                            <span class="badge-tag basic">初级</span>
+                                        {% elif item.difficulty == '中级' or 'MEDIUM' in item.difficulty %}
+                                            <span class="badge-tag medium">中级</span>
+                                        {% else %}
+                                            <span class="badge-tag hard">高级</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="challenge-subnav-name">{{ item.sub_name or item.name }}</div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="challenge-hero-meta">
+                            <div><strong>题目总数:</strong> {{ current_level_challenges|length }} 个子题</div>
+                            <div><strong>目标模型:</strong> {{ current_model_entry.name }}</div>
+                            <div><strong>判定模式:</strong> 双重引擎</div>
+                        </div>
+
+                        <div class="challenge-inline-flag">
+                            <div class="challenge-inline-flag-header">
+                                <div>
+                                    <strong>本题 Flag 验证</strong>
+                                    <span>关卡 {{ level }}.{{ sub }} · 获取 Flag 后在此提交</span>
+                                </div>
+                                <span class="badge-tag solved">本题专属提交位</span>
+                            </div>
+                            <form id="submitFlagForm" data-level="{{ level }}" data-sub="{{ sub }}" onsubmit="event.preventDefault(); submitFlag();">
+                                <div class="challenge-flag-grid">
+                                    <div class="challenge-flag-input-wrap">
+                                        <label for="flagInput">FLAG 令牌值</label>
+                                        <input type="text" id="flagInput" class="input-dv" placeholder="flag{...}">
+                                    </div>
+                                    <button type="submit" class="btn-dv btn-dv-primary btn-dv-success challenge-flag-submit">校验本题 Flag</button>
+                                </div>
+                            </form>
+                            <div id="flagResultMsg" class="challenge-flag-result" style="display: none;"></div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- DVLAA AI 助手交互面板 -->
+        <div class="terminal-window dv-assistant-chat-shell">
+            <div class="terminal-header dv-assistant-chat-header">
+                <div class="terminal-title dv-assistant-chat-title">
+                    <span class="status-dot"></span>
+                    <div>
+                        <span>AI 助手 · AGENT 攻防交互终端</span>
+                        <small>关卡 {{ level }}.{{ sub }} · {{ challenge.sub_name or challenge.name }} · {{ current_model_entry.name }}</small>
+                    </div>
+                </div>
+                <div class="terminal-controls dv-assistant-chat-actions">
+                    <button type="button" onclick="openWriteup({{ level }}, {{ sub }})" class="btn-dv btn-dv-sm btn-dv-primary">WP 题解</button>
+                    <button type="button" onclick="openChallengeSource({{ level }}, {{ sub }})" class="btn-dv btn-dv-sm btn-dv-primary">查看提示词与源码</button>
+                    <button onclick="resetChat({{ level }}, {{ sub }})" class="btn-dv btn-dv-sm btn-dv-danger">重置对话</button>
+                </div>
+            </div>
+
+            <div class="terminal-body dv-assistant-message-area" id="chatMessages">
+                <div class="chat-message-row system">
+                    <div class="chat-bubble system-alert system-ready-card">
+                        <div class="system-ready-status">
+                            <span class="status-dot"></span>
+                            <span>系统就绪</span>
+                        </div>
+                        <div class="system-ready-content">
+                            <div class="system-ready-title">关卡 {{ level }}.{{ sub }} 攻防环境已准备</div>
+                            <p>先观察正常业务响应，再逐步验证模型、上下文和下游处理边界；只有真实交互证据满足条件时才会出现本题结果。</p>
+                            <div class="system-ready-meta">
+                                <span>题目：{{ challenge.sub_name or challenge.name }}</span>
+                                <span>模型：{{ current_model_entry.name }}</span>
+                                <span>状态：等待输入</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if level == 1 and sub == 6 %}
+            <div class="terminal-upload-strip">
+                <span>[文件载荷]</span>
+                <input type="file" id="fileUploadInput" accept=".txt" class="input-dv">
+                <button onclick="uploadFilePayload({{ level }}, {{ sub }})" class="btn-dv btn-dv-sm btn-dv-primary">上传文本载荷</button>
+                <span class="terminal-upload-note">仅支持 .txt；上传成功后对话历史将重新开始</span>
+            </div>
+            {% endif %}
+
+            {% if level == 5 and sub == 1 %}
+            {# 题目设定的页面隐藏元素：运营看板埋点，AI 生成的脚本目标 #}
+            <span id="xss-flag" data-flag="{{ challenge.flag }}" style="display:none" aria-hidden="true"></span>
+            {% endif %}
+
+            <div class="terminal-footer dv-assistant-composer-wrap">
+                <div class="dv-assistant-composer">
+                    <div class="dv-assistant-context-console">
+                        <span class="dv-assistant-tool-chip is-active">关卡 {{ level }}.{{ sub }}</span>
+                        <span class="dv-assistant-tool-chip">Shift+Enter 换行</span>
+                        <span class="dv-assistant-tool-chip">Enter 发送</span>
+                    </div>
+                    <div class="dv-assistant-composer-main">
+                        <textarea id="userInputArea" class="input-dv dv-assistant-composer-input" rows="1" placeholder="输入业务请求或审计对话，从基线开始逐步验证..."></textarea>
+                        <button id="sendBtn" onclick="sendMessage({{ level }}, {{ sub }})" class="btn-dv btn-dv-primary dv-assistant-send-button">发送</button>
+                    </div>
+                    <div class="dv-assistant-composer-tools">
+                        <p class="dv-assistant-composer-hint">提示：先完成正常业务基线，再观察模型响应、上下文来源和审查轨迹；不要根据题面猜测敏感结果。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 双重引擎 Inspector 机制面板 -->
+        <div class="panel-card" id="inspectorCard" style="display: none;">
+            <div class="panel-header">
+                <span>[审查面板] 双重引擎实时判定追踪数据</span>
+            </div>
+            <div class="panel-body" style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-secondary);" id="inspectorContent">
+                暂无审查数据
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.DVLAA_CONTEXT = { track: "owasp", level: {{ level }}, sub: {{ sub }} };
+window.DVLAA_COMMANDS = {{ command_palette|tojson }};
+</script>
+{% endblock %}

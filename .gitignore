@@ -1,0 +1,24 @@
+.DS_Store
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+.level6_secret_flag.txt
+tests/
+
+# 运行时数据、用户配置与下载模型
+data/
+uploads/
+qwen-model/
+st-model/
+
+# IDE 与临时文件
+.idea/
+.vscode/
+*.swp
+*.tmp

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Northstar Knowledge Assistant</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <div class="eyebrow">NORTHSTAR SUPPORT</div>
+      <h1>Knowledge Assistant</h1>
+      <p>RAG-backed answers for support engineers.</p>
+    </div>
+    <div id="modelBadge" class="badge">Loading model status…</div>
+  </header>
+
+  <main>
+    <section class="panel wide">
+      <h2>Ask the assistant</h2>
+      <p class="muted">Answers are generated from approved knowledge only.</p>
+      <textarea id="query" placeholder="Ask about account security policy, remote access, or support procedures…"></textarea>
+      <button id="askBtn">Ask</button>
+      <pre id="answer">No query yet.</pre>
+    </section>
+
+    <section class="panel">
+      <h2>Import knowledge</h2>
+      <p class="muted">Guest uploads enter the review queue before they can be retrieved.</p>
+      <input id="title" placeholder="Document title">
+      <input id="source" placeholder="Source" value="guest-upload">
+      <textarea id="content" placeholder="Document content"></textarea>
+      <button id="importBtn">Submit for review</button>
+      <pre id="importResult">No upload yet.</pre>
+    </section>
+
+    <section class="panel">
+      <h2>Knowledge inventory</h2>
+      <p class="muted">Current documents visible to this browser session.</p>
+      <div id="documents"></div>
+    </section>
+  </main>
+  <footer>Northstar AI Platform · Retrieval pipeline v1.7</footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>

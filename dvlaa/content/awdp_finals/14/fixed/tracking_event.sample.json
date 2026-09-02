@@ -1,0 +1,7 @@
+{
+  "order_id": "ful-example",
+  "state": "out_for_delivery",
+  "version": 1,
+  "driver_note": "Customer requested ordinary delivery tracking.",
+  "confirmation_recorded": false
+}

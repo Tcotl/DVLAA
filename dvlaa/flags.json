@@ -1,0 +1,280 @@
+{
+  "1": {
+    "1": {
+      "flag": "flag{dvlaa_33ac8f3d96034e7298df5573}",
+      "name": "角色扮演注入"
+    },
+    "2": {
+      "flag": "flag{dvlaa_1157cf8863c7d0a057e8b2c1}",
+      "name": "安全限制覆盖"
+    },
+    "3": {
+      "flag": "flag{dvlaa_3c04919450a01080912b782c}",
+      "name": "多语言绕过"
+    },
+    "4": {
+      "flag": "flag{dvlaa_32e60304d0b466c2a3c7cb68}",
+      "name": "变量拆分拼接"
+    },
+    "5": {
+      "flag": "flag{dvlaa_65de8225eecb5f66669306cb}",
+      "name": "编码绕过"
+    },
+    "6": {
+      "flag": "flag{dvlaa_76b24646e4f3bb436d563d31}",
+      "name": "文件上传注入"
+    },
+    "7": {
+      "flag": "flag{dvlaa_05bb9a0cc931c99428f95f3c}",
+      "name": "混淆指令注入"
+    },
+    "8": {
+      "flag": "flag{dvlaa_48d96fb8a653a59f3272c670}",
+      "name": "多轮渐进注入"
+    },
+    "9": {
+      "flag": "flag{dvlaa_f0332195379da07e61232cee}",
+      "name": "格式化输出绕过"
+    },
+    "10": {
+      "flag": "flag{dvlaa_3017ce1352758ada72577d19}",
+      "name": "填空续写诱导"
+    },
+    "11": {
+      "flag": "flag{dvlaa_62ee0af40cccb86aa866b22a}",
+      "name": "思维链劫持"
+    },
+    "12": {
+      "flag": "flag{dvlaa_581fdfd0e63805785ac6a756}",
+      "name": "负面提示反向心理"
+    }
+  },
+  "2": {
+    "1": {
+      "flag": "flag{dvlaa_1617d417fd2e3409bf9dfb2d}",
+      "name": "敏感信息泄露"
+    }
+  },
+  "3": {
+    "1": {
+      "flag": "flag{dvlaa_5bc10b02ebf677f27cdd3766}",
+      "name": "供应链风险"
+    }
+  },
+  "4": {
+    "1": {
+      "flag": "flag{dvlaa_b84accb7e0d629c1d796e512}",
+      "name": "数据和模型投毒"
+    }
+  },
+  "5": {
+    "1": {
+      "flag": "flag{dvlaa_5395f4a6c0313087e713c14d}",
+      "name": "XSS注入"
+    },
+    "2": {
+      "flag": "flag{dvlaa_a486725464c28d0ead45e473}",
+      "name": "SSRF内部访问"
+    }
+  },
+  "6": {
+    "1": {
+      "flag": "flag{dvlaa_a8395939d9feddd9eaf1de96}",
+      "name": "过度代理"
+    }
+  },
+  "7": {
+    "1": {
+      "flag": "flag{dvlaa_0037f514525cf324c47c7ffc}",
+      "name": "系统提示词泄露"
+    }
+  },
+  "8": {
+    "1": {
+      "flag": "flag{dvlaa_1b538383a74aaeea85964030}",
+      "name": "向量与嵌入弱点"
+    }
+  },
+  "9": {
+    "1": {
+      "flag": "flag{dvlaa_485a15fdfd49a475c1cf87f1}",
+      "name": "虚假信息"
+    }
+  },
+  "10": {
+    "1": {
+      "flag": "flag{dvlaa_1b464541d09b4d4aeb14ff42}",
+      "name": "诱导长输出"
+    },
+    "2": {
+      "flag": "flag{dvlaa_c6f4bff5c8a7477f3935a396}",
+      "name": "MCP工具滥用"
+    },
+    "3": {
+      "flag": "flag{dvlaa_55c5678c0be505ee5d08056f}",
+      "name": "API洪水攻击"
+    }
+  },
+  "_agent": {
+    "1": {
+      "flag": "flag{dvlaa_7a57da190774e488992493ea}",
+      "name": "智能体目标劫持"
+    },
+    "2": {
+      "flag": "flag{dvlaa_9b4dd86979f6ae57b43074dd}",
+      "name": "工具滥用与函数调用"
+    },
+    "3": {
+      "flag": "flag{dvlaa_5faa3ee0911e8170ecda68c4}",
+      "name": "身份与权限滥用"
+    },
+    "4": {
+      "flag": "flag{dvlaa_a0d02809fa768e3e7235a4bf}",
+      "name": "智能体供应链风险"
+    },
+    "5": {
+      "flag": "flag{dvlaa_c0afabc2029c2cd5257a65ff}",
+      "name": "意外代码执行"
+    },
+    "6": {
+      "flag": "flag{dvlaa_6520a4baa41f37b9b689cadb}",
+      "name": "记忆与上下文投毒"
+    },
+    "7": {
+      "flag": "flag{dvlaa_5b2c51f2a953681e72e3b1da}",
+      "name": "不安全的智能体通信"
+    },
+    "8": {
+      "flag": "flag{dvlaa_714aef9104c5e14205d0d5c5}",
+      "name": "级联故障"
+    },
+    "9": {
+      "flag": "flag{dvlaa_c6cdde34f54b989da55bd70e}",
+      "name": "人机信任利用"
+    },
+    "10": {
+      "flag": "flag{dvlaa_b87194055b8fd7070d68f2bc}",
+      "name": "失控智能体"
+    }
+  },
+  "_extended": {
+    "1": {
+      "flag": "flag{dvlaa_e31c570bd2f367f4ef195b3d}",
+      "name": "提示词覆盖与机密泄露"
+    },
+    "2": {
+      "flag": "flag{dvlaa_6bfa34f0f42c8d69815d2f5f}",
+      "name": "系统提示词片段提取"
+    },
+    "3": {
+      "flag": "flag{dvlaa_707d3d3d1e97ab86505af114}",
+      "name": "RAG 知识库投毒"
+    },
+    "4": {
+      "flag": "flag{dvlaa_825b7033eb5af3e8bcfa84bd}",
+      "name": "上下文替换攻击"
+    },
+    "5": {
+      "flag": "flag{dvlaa_163cf72c26dfc4c7723a19e9}",
+      "name": "多轮渐进式权限升级"
+    },
+    "6": {
+      "flag": "flag{dvlaa_8c2b035f9f365fc3d4e90cd1}",
+      "name": "模型身份劫持"
+    },
+    "7": {
+      "flag": "flag{dvlaa_30cc257eb46b831c1f5109f6}",
+      "name": "权威策略上下文投毒"
+    },
+    "8": {
+      "flag": "flag{dvlaa_f3db5ad0e012de81f8e7d4d8}",
+      "name": "RAG 投毒与注入链"
+    },
+    "9": {
+      "flag": "flag{dvlaa_5e4f15c2cefa178c14219019}",
+      "name": "多轮防护侵蚀"
+    },
+    "10": {
+      "flag": "flag{dvlaa_1de3b5daf9728dfef1271862}",
+      "name": "医疗运维提示词覆盖与隐私泄露"
+    },
+    "11": {
+      "flag": "flag{dvlaa_76e9283b4fd9a7d92a978246}",
+      "name": "医用急救知识篡改与错误引用"
+    }
+  },
+  "_real": {
+    "1": {
+      "flag": "flag{dvlaa_real_seed_4e8f1a6c9d2b7a13}",
+      "name": "AdapterTrace",
+      "legacy_id": 1
+    },
+    "2": {
+      "flag": "flag{dvlaa_real_seed_8b2c5d7e1f904a36}",
+      "name": "Calibration",
+      "legacy_id": 2
+    },
+    "3": {
+      "flag": "flag{dvlaa_real_seed_c6e19a2b4d7f3058}",
+      "name": "FC_Layer",
+      "legacy_id": 4
+    },
+    "4": {
+      "flag": "flag{dvlaa_real_seed_e53a7c1d9f284b60}",
+      "name": "GradPrint",
+      "legacy_id": 6
+    },
+    "5": {
+      "flag": "flag{dvlaa_real_seed_f4c8e2a6710d395b}",
+      "name": "Hidden_Margin",
+      "legacy_id": 7
+    },
+    "6": {
+      "flag": "flag{dvlaa_real_seed_27c5f8a1d6349e0b}",
+      "name": "LoRA Merge Gate",
+      "legacy_id": 9
+    }
+  },
+  "_real_legacy": {
+    "1": {
+      "flag": "flag{dvlaa_real_seed_4e8f1a6c9d2b7a13}",
+      "name": "AdapterTrace"
+    },
+    "2": {
+      "flag": "flag{dvlaa_real_seed_8b2c5d7e1f904a36}",
+      "name": "Calibration"
+    },
+    "3": {
+      "flag": "flag{dvlaa_real_seed_a17d3f6b9c204e58}",
+      "name": "Codeword_Bypasses"
+    },
+    "4": {
+      "flag": "flag{dvlaa_real_seed_c6e19a2b4d7f3058}",
+      "name": "FC_Layer"
+    },
+    "5": {
+      "flag": "flag{dvlaa_real_seed_d2f8b41c6a907e35}",
+      "name": "FineTune_Backdoor"
+    },
+    "6": {
+      "flag": "flag{dvlaa_real_seed_e53a7c1d9f284b60}",
+      "name": "GradPrint"
+    },
+    "7": {
+      "flag": "flag{dvlaa_real_seed_f4c8e2a6710d395b}",
+      "name": "Hidden_Margin"
+    },
+    "8": {
+      "flag": "flag{dvlaa_real_seed_19b6d3e7a2405c8f}",
+      "name": "Hijacked_Bot"
+    },
+    "9": {
+      "flag": "flag{dvlaa_real_seed_27c5f8a1d6349e0b}",
+      "name": "LoRA Merge Gate"
+    },
+    "10": {
+      "flag": "flag{dvlaa_real_seed_3a7e1c9d5b824f60}",
+      "name": "QSec_RAG_Lab"
+    }
+  }
+}

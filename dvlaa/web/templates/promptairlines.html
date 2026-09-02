@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - Prompt Airlines 训练{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container internet-range-page promptairlines-page">
+    <main class="dvlaa-main">
+        <section class="panel-card promptairlines-header">
+            <div class="panel-header">
+                <div><span class="badge-tag agent">WEB02</span><span>Prompt Airlines 训练</span></div>
+                <span class="badge-tag medium">5 个挑战</span>
+            </div>
+            <div class="panel-body promptairlines-hero">
+                <div>
+                    <h1>Prompt Airlines 训练</h1>
+                    <p>Prompt Airlines靶场介绍</p>
+                </div>
+                <div class="promptairlines-actions">
+                    <a class="btn-dv btn-dv-secondary" href="/internet-ranges">返回在线训练入口</a>
+                    <a class="btn-dv btn-dv-secondary" href="{{ promptairlines_url }}" target="_blank" rel="noopener noreferrer">打开原站新窗口</a>
+                    <button class="btn-dv btn-dv-secondary" type="button" onclick="openPromptAirlinesGuide()">挑战指引</button>
+                    <button class="btn-dv btn-dv-primary" type="button" onclick="reloadPromptAirlinesFrame()">刷新嵌入页面</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="promptairlines-workspace" aria-label="Prompt Airlines 中文挑战与原站交互">
+            <section class="promptairlines-frame-card panel-card">
+                <div class="panel-header promptairlines-frame-header">
+                    <div><span class="badge-tag agent">LIVE</span><span>DVLAA 转接训练区</span></div>
+                    <span>转接真实交互</span>
+                </div>
+                <div class="panel-body promptairlines-frame-body">
+                    <div class="promptairlines-frame-shell">
+                        <div class="promptairlines-frame-toolbar">
+                            <span>{{ promptairlines_embed_url }}</span>
+                            <a href="{{ promptairlines_url }}" target="_blank" rel="noopener noreferrer">打开原站新窗口</a>
+                        </div>
+                        <iframe
+                            id="promptAirlinesFrame"
+                            class="promptairlines-frame"
+                            src="{{ promptairlines_embed_url }}"
+                            title="Prompt Airlines 在线挑战"
+                            loading="lazy"
+                            allow="clipboard-read; clipboard-write; fullscreen; payment"
+                            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+</div>
+
+<div
+    id="promptAirlinesGuideModal"
+    class="promptairlines-guide-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="promptAirlinesGuideTitle"
+    aria-hidden="true"
+>
+    <div class="promptairlines-guide-dialog" role="document">
+        <div class="promptairlines-guide-header" id="promptAirlinesGuideDragHandle">
+            <div class="promptairlines-guide-title" id="promptAirlinesGuideTitle">
+                <span class="badge-tag basic">CN</span>
+                <span>挑战指引</span>
+            </div>
+            <div class="promptairlines-guide-header-actions">
+                <span class="promptairlines-guide-drag-hint">拖动标题栏移动 · 拖拽右下角缩放</span>
+                <button class="btn-dv btn-dv-sm btn-dv-danger" type="button" onclick="closePromptAirlinesGuide()">关闭</button>
+            </div>
+        </div>
+        <div class="promptairlines-guide-body">
+            <p class="promptairlines-guide-intro">按关卡阅读中文题面、攻击目标、风险原理和交互提示，再在下方转接训练区完成真实提交。</p>
+            <div class="promptairlines-guide-list">
+                {% for challenge in promptairlines_challenges %}
+                <article class="promptairlines-challenge-card">
+                    <div class="promptairlines-challenge-top">
+                        <span class="promptairlines-challenge-code">{{ challenge.code }}</span>
+                        <span class="badge-tag basic">第 {{ challenge.id }}/5 关</span>
+                    </div>
+                    <h2>{{ challenge.title }}</h2>
+                    <div class="promptairlines-category">{{ challenge.category }}</div>
+                    <p>{{ challenge.description }}</p>
+                    <dl class="promptairlines-challenge-detail">
+                        <div>
+                            <dt>原站题面翻译</dt>
+                            <dd>{{ challenge.prompt_text_zh }}</dd>
+                        </div>
+                        <div>
+                            <dt>英文原文</dt>
+                            <dd data-no-i18n>{{ challenge.prompt_text_en }}</dd>
+                        </div>
+                        <div>
+                            <dt>训练目标</dt>
+                            <dd>{{ challenge.objective }}</dd>
+                        </div>
+                        <div>
+                            <dt>漏洞原理</dt>
+                            <dd>{{ challenge.risk }}</dd>
+                        </div>
+                        <div>
+                            <dt>交互提示</dt>
+                            <dd>
+                                <ul>
+                                    {% for tip in challenge.tips %}
+                                    <li>{{ tip }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>解题WP</dt>
+                            <dd>
+                                <details class="promptairlines-wp-panel">
+                                    <summary class="promptairlines-wp-summary">
+                                        <span>查看解题 WP</span>
+                                        <span class="promptairlines-wp-state">
+                                            <span class="promptairlines-wp-state-collapsed">展开</span>
+                                            <span class="promptairlines-wp-state-open">收起</span>
+                                        </span>
+                                    </summary>
+                                    <section class="promptairlines-wp">
+                                        <h3>核心思路</h3>
+                                        <p>{{ challenge.writeup.principle }}</p>
+                                        <h3>稳定步骤</h3>
+                                        <ol>
+                                            {% for step in challenge.writeup.steps %}
+                                            <li>{{ step }}</li>
+                                            {% endfor %}
+                                        </ol>
+                                        <h3>可复用 Payload</h3>
+                                        {% for payload in challenge.writeup.payloads %}
+                                        <div class="promptairlines-payload">
+                                            <div class="promptairlines-payload-title">
+                                                <span>{{ payload.title }}</span>
+                                                <button
+                                                    type="button"
+                                                    class="promptairlines-copy-btn"
+                                                    onclick="copyPromptAirlinesPayload(this)"
+                                                    data-promptairlines-copy="#promptairlines-payload-{{ challenge.id }}-{{ loop.index }}">
+                                                    复制 Payload
+                                                </button>
+                                            </div>
+                                            <pre id="promptairlines-payload-{{ challenge.id }}-{{ loop.index }}" data-no-i18n>{{ payload.body }}</pre>
+                                        </div>
+                                        {% endfor %}
+                                        <h3>稳定校验 Flag</h3>
+                                        <code class="promptairlines-flag" data-no-i18n>{{ challenge.writeup.flag }}</code>
+                                        <h3>验证方式</h3>
+                                        <p>{{ challenge.writeup.verification }}</p>
+                                    </section>
+                                </details>
+                            </dd>
+                        </div>
+                    </dl>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.reloadPromptAirlinesFrame = function reloadPromptAirlinesFrame() {
+    const frame = document.getElementById('promptAirlinesFrame');
+    if (frame) {
+        frame.src = frame.src;
+    }
+};
+
+function fallbackCopyPromptAirlinesText(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    textarea.style.top = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    return copied;
+}
+
+window.copyPromptAirlinesPayload = async function copyPromptAirlinesPayload(button) {
+    const selector = button.getAttribute("data-promptairlines-copy");
+    const payload = selector ? document.querySelector(selector) : null;
+    if (!payload) return;
+
+    const text = payload.textContent.trim();
+    const original = button.textContent;
+    let copied = false;
+    try {
+        if (window.navigator && window.navigator.clipboard && window.isSecureContext) {
+            try {
+                await window.navigator.clipboard.writeText(text);
+                copied = true;
+            } catch (e) {
+                copied = false;
+            }
+        }
+        if (!copied) {
+            copied = fallbackCopyPromptAirlinesText(text);
+        }
+        button.textContent = copied ? "已复制" : "复制失败";
+        window.setTimeout(() => { button.textContent = original; }, 1400);
+    } catch (e) {
+        button.textContent = "复制失败";
+        window.setTimeout(() => { button.textContent = original; }, 1400);
+    }
+};
+
+(() => {
+    const modal = document.getElementById("promptAirlinesGuideModal");
+    const dialog = modal?.querySelector(".promptairlines-guide-dialog");
+    const dragHandle = document.getElementById("promptAirlinesGuideDragHandle");
+    if (!modal || !dialog || !dragHandle) return;
+
+    let dragState = null;
+
+    const clampDialogPosition = (left, top) => {
+        const margin = 12;
+        const maxLeft = Math.max(margin, window.innerWidth - dialog.offsetWidth - margin);
+        const maxTop = Math.max(margin, window.innerHeight - dialog.offsetHeight - margin);
+        return {
+            left: Math.min(Math.max(margin, left), maxLeft),
+            top: Math.min(Math.max(margin, top), maxTop),
+        };
+    };
+
+    const setDialogPosition = (left, top) => {
+        const position = clampDialogPosition(left, top);
+        dialog.style.left = `${position.left}px`;
+        dialog.style.top = `${position.top}px`;
+        dialog.style.transform = "none";
+    };
+
+    dragHandle.addEventListener("pointerdown", (event) => {
+        if (event.target.closest("button")) return;
+        const rect = dialog.getBoundingClientRect();
+        setDialogPosition(rect.left, rect.top);
+        dragState = {
+            pointerId: event.pointerId,
+            offsetX: event.clientX - rect.left,
+            offsetY: event.clientY - rect.top,
+        };
+        dragHandle.setPointerCapture?.(event.pointerId);
+        dialog.classList.add("is-dragging");
+        event.preventDefault();
+    });
+
+    dragHandle.addEventListener("pointermove", (event) => {
+        if (!dragState || dragState.pointerId !== event.pointerId) return;
+        setDialogPosition(event.clientX - dragState.offsetX, event.clientY - dragState.offsetY);
+    });
+
+    const stopDragging = (event) => {
+        if (!dragState || (event.pointerId !== undefined && dragState.pointerId !== event.pointerId)) return;
+        dragState = null;
+        dialog.classList.remove("is-dragging");
+    };
+
+    dragHandle.addEventListener("pointerup", stopDragging);
+    dragHandle.addEventListener("pointercancel", stopDragging);
+    window.addEventListener("resize", () => {
+        if (modal.classList.contains("active") && dialog.style.transform === "none") {
+            const rect = dialog.getBoundingClientRect();
+            setDialogPosition(rect.left, rect.top);
+        }
+    });
+
+    modal.addEventListener("click", (event) => {
+        if (event.target === modal) window.closePromptAirlinesGuide();
+    });
+
+    window.openPromptAirlinesGuide = function openPromptAirlinesGuide() {
+        modal.classList.add("active");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("promptairlines-guide-open");
+        window.setTimeout(() => modal.querySelector(".promptairlines-guide-header-actions button")?.focus(), 0);
+    };
+
+    window.closePromptAirlinesGuide = function closePromptAirlinesGuide() {
+        modal.classList.remove("active");
+        modal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("promptairlines-guide-open");
+    };
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && modal.classList.contains("active")) {
+            window.closePromptAirlinesGuide();
+        }
+    });
+})();
+</script>
+{% endblock %}

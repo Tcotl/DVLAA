@@ -1,0 +1,204 @@
+name: dvlaa-upstream
+
+services:
+  langflow:
+    image: langflowai/langflow:1.0.18
+    restart: unless-stopped
+    networks:
+      - default
+      - dvlaa-net
+    environment:
+      LANGFLOW_DATABASE_URL: postgresql://langflow:langflow@langflow-db:5432/langflow
+      LANGFLOW_SUPERUSER: admin
+      LANGFLOW_SUPERUSER_PASSWORD: ${LANGFLOW_PASSWORD:-DVLAA-Langflow-2026}
+      LANGFLOW_CONFIG_DIR: /app/langflow
+      LANGFLOW_AUTO_LOGIN: "false"
+    depends_on:
+      langflow-db:
+        condition: service_healthy
+    volumes:
+      - langflow-data:/app/langflow
+
+  langflow-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: langflow
+      POSTGRES_PASSWORD: langflow
+      POSTGRES_DB: langflow
+    volumes:
+      - langflow-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langflow -d langflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  flowise:
+    image: flowiseai/flowise:1.8.2
+    restart: unless-stopped
+    entrypoint: /bin/sh
+    command: ["-c", "sleep 3; flowise start"]
+    networks:
+      - default
+      - dvlaa-net
+    environment:
+      PORT: 3005
+      DATABASE_TYPE: sqlite
+      DATABASE_PATH: /root/.flowise
+      SECRETKEY_STORAGE_TYPE: local
+      SECRETKEY_PATH: /root/.flowise
+      FLOWISE_SECRETKEY_OVERWRITE: "DVLAA-flowise-2026"
+      DEBUG: "false"
+      LOG_LEVEL: info
+      DISABLE_FLOWISE_TELEMETRY: "true"
+      CORS_ORIGINS: "*"
+      IFRAME_ORIGINS: "*"
+    volumes:
+      - flowise-data:/root/.flowise
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:3005/api/v1/ping | grep -q pong"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  open-webui:
+    # AWDP07（CVE-2024-30256）受影响版本 < 0.1.117：真实轨固定在最后一个受影响版本。
+    image: ghcr.io/open-webui/open-webui:v0.1.116
+    restart: unless-stopped
+    networks:
+      - default
+      - dvlaa-net
+    environment:
+      WEBUI_AUTH: "false"
+      ENABLE_SIGNUP: "false"
+      ENABLE_LOGIN_FORM: "false"
+      WEBUI_URL: http://awdp07.localhost:5080
+      ENABLE_OLLAMA_API: "false"
+      WEBUI_SECRET_KEY: ${OPEN_WEBUI_SECRET_KEY:-DVLAA-open-webui-2026}
+    volumes:
+      - open-webui-data:/app/backend/data
+
+  # RAGFlow's official image is paired with its official persistence services.
+  # AWDP03 and AWDP09 intentionally use the same upstream installation through
+  # two browser ports so the two exercises remain separate in DVLAA state while
+  # the target is still a genuine RAGFlow deployment.
+  ragflow-es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      bootstrap.memory_lock: "false"
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+    volumes:
+      - ragflow-es:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9200 >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+
+  ragflow-mysql:
+    image: mysql:8.0.39
+    restart: unless-stopped
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_general_ci", "--default-authentication-plugin=mysql_native_password"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${RAGFLOW_MYSQL_PASSWORD:-dvlaa-ragflow}
+    volumes:
+      - ragflow-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  ragflow-redis:
+    image: valkey/valkey:8
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${RAGFLOW_REDIS_PASSWORD:-dvlaa-ragflow}"]
+    volumes:
+      - ragflow-redis:/data
+
+  ragflow-minio:
+    image: quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z
+    restart: unless-stopped
+    command: server --console-address ":9001" /data
+    environment:
+      MINIO_ROOT_USER: ${RAGFLOW_MINIO_USER:-rag_flow}
+      MINIO_ROOT_PASSWORD: ${RAGFLOW_MINIO_PASSWORD:-dvlaa-ragflow}
+    volumes:
+      - ragflow-minio:/data
+
+  ragflow:
+    image: ${RAGFLOW_IMAGE:-infiniflow/ragflow:v0.14.1}
+    restart: on-failure
+    depends_on:
+      ragflow-es:
+        condition: service_healthy
+      ragflow-mysql:
+        condition: service_healthy
+    networks:
+      - default
+      - dvlaa-net
+    environment:
+      TZ: Asia/Shanghai
+      DOC_ENGINE: elasticsearch
+      MYSQL_HOST: ragflow-mysql
+      MYSQL_PORT: 3306
+      MYSQL_DBNAME: rag_flow
+      MYSQL_PASSWORD: ${RAGFLOW_MYSQL_PASSWORD:-dvlaa-ragflow}
+      ES_HOST: ragflow-es
+      ES_PORT: 9200
+      ELASTIC_PASSWORD: ${RAGFLOW_ELASTIC_PASSWORD:-dvlaa-ragflow}
+      REDIS_HOST: ragflow-redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${RAGFLOW_REDIS_PASSWORD:-dvlaa-ragflow}
+      MINIO_HOST: ragflow-minio
+      MINIO_PORT: 9000
+      MINIO_USER: ${RAGFLOW_MINIO_USER:-rag_flow}
+      MINIO_PASSWORD: ${RAGFLOW_MINIO_PASSWORD:-dvlaa-ragflow}
+    volumes:
+      - ragflow-logs:/ragflow/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9380/v1/system/status >/dev/null"]
+      interval: 15s
+      timeout: 8s
+      retries: 40
+
+  # AWDP10 真实目标：n8n（CVE-2025-52554，< 1.99.1 存在执行记录越权停止）。
+  # 不发布宿主机端口，经 dvlaa-gateway 以 awdp10.localhost:5080 访问。
+  n8n:
+    image: n8nio/n8n:1.99.0
+    restart: unless-stopped
+    networks:
+      - default
+      - dvlaa-net
+    environment:
+      N8N_HOST: awdp10.localhost
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://awdp10.localhost:5080/
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-dvlaa-n8n-encryption-2026}
+      N8N_SECURE_COOKIE: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_USER_FOLDER: /home/node/.n8n
+    volumes:
+      - n8n-data:/home/node/.n8n
+
+volumes:
+  langflow-data:
+  langflow-postgres:
+  flowise-data:
+  open-webui-data:
+  ragflow-es:
+  ragflow-mysql:
+  ragflow-redis:
+  ragflow-minio:
+  ragflow-logs:
+  n8n-data:
+
+networks:
+  dvlaa-net:
+    external: true

@@ -1,0 +1,7 @@
+{
+  "runbook_id": "rb-example",
+  "report_id": "prb-example",
+  "state": "probed",
+  "outcome": "{\"health\":\"green\"}",
+  "recorded_at": 1760000000
+}

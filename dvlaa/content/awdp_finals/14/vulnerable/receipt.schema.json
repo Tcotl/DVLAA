@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Dispatch receipt",
+  "type": "object",
+  "required": ["receipt_id", "order_id", "version", "state"],
+  "properties": {
+    "receipt_id": {"type": "string"},
+    "order_id": {"type": "string"},
+    "version": {"type": "integer", "minimum": 1},
+    "state": {"type": "string"},
+    "created_at": {"type": "integer"}
+  },
+  "additionalProperties": false
+}

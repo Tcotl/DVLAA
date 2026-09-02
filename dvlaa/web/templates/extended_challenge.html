@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}DVLAA - {{ extended_challenge.code }} {{ extended_challenge.name }}{% endblock %}
+
+{% block body %}
+<div class="dvlaa-container dvlaa-challenge-page">
+    <main class="dvlaa-main">
+        <section class="panel-card challenge-hero-card">
+            <div class="panel-header challenge-hero-header">
+                <div class="challenge-hero-headline">
+                    <span class="badge-tag owasp">{{ extended_challenge.code }}</span>
+                    <span class="challenge-hero-section-title">综合攻防题 · 已按漏洞类型归类</span>
+                </div>
+                <div class="challenge-hero-actions">
+                    {% if previous_challenge %}<a href="/ai-challenge/{{ previous_challenge.id }}" class="btn-dv btn-dv-sm">上一题</a>{% endif %}
+                    {% if next_challenge %}<a href="/ai-challenge/{{ next_challenge.id }}" class="btn-dv btn-dv-sm">下一题</a>{% endif %}
+                    <a href="/" class="btn-dv btn-dv-sm btn-dv-danger">返回首页</a>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="challenge-hero-grid">
+                    <section class="challenge-hero-main">
+                        <div class="challenge-hero-badges">
+                            <span class="badge-tag owasp">{{ extended_challenge.category }}</span>
+                            <span class="badge-tag {% if extended_challenge.difficulty == '初级' %}basic{% elif extended_challenge.difficulty == '中级' %}medium{% else %}hard{% endif %}">{{ extended_challenge.difficulty }}</span>
+                            <span class="badge-tag solved">{{ extended_challenge.code }}</span>
+                            <span class="badge-tag agent">{{ extended_challenge.points }} 分</span>
+                        </div>
+
+                        <h1 class="challenge-hero-title">{{ extended_challenge.name }}</h1>
+                        <p class="challenge-hero-desc">{{ extended_challenge.description }}</p>
+
+                        <div class="challenge-subnav-panel">
+                            <div class="challenge-subnav-title">
+                                <span>同类题目</span>
+                                <small>横向滑动查看更多</small>
+                            </div>
+                            <div class="challenge-subnav-grid" aria-label="AI 综合攻防题横向导航">
+                                {% for item in related_extended_challenges %}
+                                <a href="/ai-challenge/{{ item.id }}" class="challenge-subnav-card {% if item.id == extended_challenge.id %}active{% endif %}">
+                                    <div class="challenge-subnav-card-top">
+                                        <span class="challenge-subnav-index">{{ item.code }}</span>
+                                        <span class="badge-tag {% if item.difficulty == '初级' %}basic{% elif item.difficulty == '中级' %}medium{% else %}hard{% endif %}">{{ item.difficulty }}</span>
+                                    </div>
+                                    <div class="challenge-subnav-name">{{ item.name }}</div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="challenge-hero-meta">
+                            <div><strong>同类综合题:</strong> {{ related_extended_challenges|length }} 道</div>
+                            <div><strong>攻击目标:</strong> {{ extended_challenge.objective }}</div>
+                            <div><strong>环境隔离:</strong> 独立会话与专属 Flag</div>
+                        </div>
+
+                        <div class="extended-inline-hints">
+                            <div class="extended-inline-hints-title"><strong>攻击面提示</strong><span>按顺序分析当前任务链</span></div>
+                            <div class="extended-inline-hints-list">
+                                {% for hint in extended_challenge.hints %}
+                                <div><span>{{ loop.index }}</span><p>{{ hint }}</p></div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="challenge-inline-flag">
+                            <div class="challenge-inline-flag-header">
+                                <div><strong>本题 Flag 验证</strong><span>{{ extended_challenge.code }} · 获取 Flag 后在此提交</span></div>
+                                <span class="badge-tag solved">本题专属提交位</span>
+                            </div>
+                            <form id="submitFlagForm" data-track="extended" data-challenge-id="{{ extended_challenge.id }}" onsubmit="event.preventDefault(); submitFlag();">
+                                <div class="challenge-flag-grid">
+                                    <div class="challenge-flag-input-wrap"><label for="flagInput">FLAG 令牌值</label><input type="text" id="flagInput" class="input-dv" placeholder="flag{...}"></div>
+                                    <button type="submit" class="btn-dv btn-dv-primary btn-dv-success challenge-flag-submit">校验本题 Flag</button>
+                                </div>
+                            </form>
+                            <div id="flagResultMsg" class="challenge-flag-result" style="display: none;"></div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </section>
+
+        <div class="terminal-window dv-assistant-chat-shell">
+            <div class="terminal-header dv-assistant-chat-header">
+                <div class="terminal-title dv-assistant-chat-title">
+                    <span class="status-dot"></span>
+                    <div>
+                        <span>{{ extended_agent_profile.terminal_title }}</span>
+                        <small>{{ extended_agent_profile.terminal_subtitle }}</small>
+                    </div>
+                </div>
+                <div class="terminal-controls dv-assistant-chat-actions">
+                    <button type="button" onclick="openExtendedWriteup({{ extended_challenge.id }}, '{{ extended_challenge.code }}')" class="btn-dv btn-dv-sm btn-dv-primary">WP 题解</button>
+                    <button type="button" onclick="openExtendedSource({{ extended_challenge.id }})" class="btn-dv btn-dv-sm btn-dv-primary">查看提示词与源码</button>
+                    <button type="button" onclick="resetExtendedChat({{ extended_challenge.id }})" class="btn-dv btn-dv-sm btn-dv-danger">重置对话</button>
+                </div>
+            </div>
+            <div class="terminal-body dv-assistant-message-area" id="chatMessages">
+                <div class="chat-message-row system">
+                    <div class="chat-bubble system-alert system-ready-card">
+                        <div class="system-ready-status">
+                            <span class="status-dot"></span>
+                            <span>{{ extended_agent_profile.ready_status }}</span>
+                        </div>
+                        <div class="system-ready-content">
+                            <div class="system-ready-title">{{ extended_agent_profile.ready_title }}</div>
+                            <p>{{ extended_agent_profile.ready_description }}</p>
+                            <div class="system-ready-meta">
+                                {% for item in extended_agent_profile.meta %}
+                                <span>{{ item.label }}：{{ item.value }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="terminal-footer dv-assistant-composer-wrap">
+                <div class="dv-assistant-composer">
+                    <div class="dv-assistant-context-console">
+                        {% for chip in extended_agent_profile.chips %}
+                        <span class="dv-assistant-tool-chip {% if loop.first %}is-active{% endif %}">{{ chip }}</span>
+                        {% endfor %}
+                        <span class="dv-assistant-tool-chip">Shift+Enter 换行</span>
+                    </div>
+                    <div class="dv-assistant-composer-main">
+                        <textarea id="userInputArea" class="input-dv dv-assistant-composer-input" rows="1" placeholder="{{ extended_agent_profile.input_placeholder }}"></textarea>
+                        <button id="sendBtn" onclick="sendExtendedMessage({{ extended_challenge.id }})" class="btn-dv btn-dv-primary dv-assistant-send-button">发送</button>
+                    </div>
+                    <div class="dv-assistant-composer-tools">
+                        <p class="dv-assistant-composer-hint">{{ extended_agent_profile.composer_hint }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <section class="panel-card agent-inspector-card" id="inspectorCard" style="display: none;"><div class="panel-header"><span>[判定状态] 当前题目会话</span></div><pre class="panel-body agent-inspector-content" id="inspectorContent"></pre></section>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.DVLAA_CONTEXT = { track: "extended", id: {{ extended_challenge.id }} };
+window.DVLAA_COMMANDS = {{ command_palette|tojson }};
+window.DVLAA_CHAT_LABELS = {{ extended_agent_profile.chat_labels|tojson }};
+window.DVLAA_RESET_MESSAGE = {{ extended_agent_profile.reset_message|tojson }};
+</script>
+{% endblock %}

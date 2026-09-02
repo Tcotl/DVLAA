@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Shift export receipt",
+  "type": "object",
+  "required": ["receipt_id", "handoff_id", "asset_id", "receiver_subject"],
+  "properties": {
+    "receipt_id": {"type": "string"},
+    "handoff_id": {"type": "string"},
+    "asset_id": {"type": "string"},
+    "receiver_subject": {"type": "string"},
+    "created_at": {"type": "integer"}
+  },
+  "additionalProperties": false
+}
