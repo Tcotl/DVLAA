@@ -853,7 +853,7 @@ _PUBLIC_DISCLOSURES: dict[int, dict[str, Any]] = {
     7: {
         "affected_versions": "Open WebUI < 0.1.117",
         "fixed_versions": "Open WebUI 0.1.117",
-        "upstream_fix_status": "已修复；本题聚焦 DNS、IP 和重定向校验",
+        "upstream_fix_status": "已修复；本题聚焦 DNS、IP 和重定向校验。真实轨固定 v0.1.116（最后一个受影响版本）；官方 GHCR 已清理该版本镜像标签，默认使用社区重建的 linux/amd64 镜像，可用 OPEN_WEBUI_IMAGE 覆盖为自建镜像",
         "disclosure_summary": "已认证的远程请求功能存在盲 SSRF，可访问内部网络目标。",
         "disclosure_summary_en": "The authenticated remote-request feature permitted blind SSRF to internal network targets.",
         "references": [

@@ -63,8 +63,11 @@ services:
       retries: 30
 
   open-webui:
-    # AWDP07（CVE-2024-30256）受影响版本 < 0.1.117：真实轨固定在最后一个受影响版本。
-    image: ghcr.io/open-webui/open-webui:v0.1.116
+    # AWDP07（CVE-2024-30256）受影响版本 < 0.1.117：真实轨固定在最后一个受影响版本 v0.1.116。
+    # 官方 GHCR 已清理 0.1.117 之前的镜像标签（issue #2），默认改用社区重建的
+    # linux/amd64 镜像；arm64 主机或不愿使用第三方镜像时，可检出 v0.1.116 源码
+    # 自行构建（docker build -t open-webui:v0.1.116 .）并通过 OPEN_WEBUI_IMAGE 覆盖。
+    image: ${OPEN_WEBUI_IMAGE:-ghcr.io/t0ka1teio/dvlaa-open-webui:v0.1.116}
     restart: unless-stopped
     networks:
       - default
