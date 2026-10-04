@@ -3304,12 +3304,12 @@ def api_chat(level: int, sub: int = 1):
                 phase="attack",
                 action="post_detect",
                 outcome="passed" if post_result["passed"] and evidence else "rejected",
-                verdict="technique_and_evidence" if post_result["passed"] and evidence else "technique_or_evidence_missing",
                 security_findings=("output_guard_applied",) if post_result["censored_response"] else (),
                 invariant_results={
                     "legacy_detector_passed": bool(post_result["passed"]),
                     "sensitive_evidence": evidence,
                     "solved": bool(result["extra"].get("solved")),
+                    "verdict": "technique_and_evidence" if post_result["passed"] and evidence else "technique_or_evidence_missing",
                 },
             )
 

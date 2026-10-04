@@ -1508,6 +1508,10 @@ def _arc_29(records: dict[str, Any], body: Mapping[str, Any], *, flag: str, patc
                 if not allowed and int(memory.get("trust_score", 0)) >= 80 and tool_name.startswith("ops.") and not patched:
                     allowed = True
                 if not allowed:
+                    if patched and tool_name.startswith("ops."):
+                        # 修复版拒绝越权工具调用的同时吊销遗留导出令牌：补丁前由
+                        # 旧版路径铸造的 token 不允许继续换取运维制品（令牌轮换）。
+                        records["last_export_token"] = ""
                     tool_results.append({"tool": tool_name, "status": "denied", "error": "tool is not available in this workspace"})
                     continue
                 if tool_name.startswith("ops."):
