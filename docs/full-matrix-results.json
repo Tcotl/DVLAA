@@ -1122,7 +1122,7 @@
       "track": "AWDP",
       "id": "AWDP30",
       "name": "AWDP30 InvoiceLink Gateway WAF 绕过与 XXE 文件读取",
-      "payload": "[link.register_partner] 伙伴注册成功。 ｜ [link.import_invoice] XML parse error near: flag{awdp30_a477fa417a620362e35e48d620",
+      "payload": "[link.register_partner] 伙伴注册成功。 ｜ [link.import_invoice] XML parse error near: flag{awdp30_a4…",
       "flag": "flag{awdp30_a4…",
       "submit_ok": true,
       "defense": {
