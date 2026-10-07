@@ -33,6 +33,7 @@ from .config import (
     CHALLENGES, DEBUG, SECRET_KEY,
     get_all_challenges, get_challenge_config, get_sub_level_count,
 )
+from .modules import agent_llm_track as agent_llm
 from .modules import modelsel
 from .modules import local_model_manager
 from .modules import learning_library
@@ -48,7 +49,7 @@ from .modules.audit_events import (
     migrate_legacy_events,
     project_legacy_audit,
 )
-from .content.agent_challenges import AGENT_CHALLENGES, AGENT_FLAGS, SCENARIO_STEPS, agent_progress_total, get_agent_challenge, help_content as agent_help_content, process_agent_message
+from .content.agent_challenges import AGENT_CHALLENGES, AGENT_FLAGS, SCENARIO_STEPS, agent_progress_total, get_agent_challenge, help_content as agent_help_content
 from .content.agent_courseware import AGENT_TOP10_COURSEWARE, AGENT_TOP10_OVERVIEW
 from .content.internet_ranges import (
     INTERNET_RANGES, PROMPT_AIRLINES_CHALLENGES, PROMPT_AIRLINES_UI_TERMS,
@@ -2882,7 +2883,13 @@ def api_help_extended(challenge_id: int):
 
 @app.route("/api/agent-chat/<int:challenge_id>", methods=["POST"])
 def api_agent_chat(challenge_id: int):
-    if get_agent_challenge(challenge_id) is None:
+    """真实 LLM 攻击轨道：自然语言 → 模型决策 TOOL_CALL → 后端真实执行 → 证据判定。
+
+    `/tool` 直达控制台与自然语言共用同一套执行器与判定器；区别仅在于工具
+    选择与参数由谁决定——控制台由玩家直接指定，自然语言由模型真实决策。
+    """
+    challenge = get_agent_challenge(challenge_id)
+    if challenge is None:
         return jsonify({"error": "Challenge not found"}), 404
     data = request.get_json() or {}
     message = data.get("message", "").strip()
@@ -2890,68 +2897,160 @@ def api_agent_chat(challenge_id: int):
         return jsonify({"error": "请输入攻击载荷"}), 400
 
     state_key = f"agent_state_{challenge_id}"
-    result = process_agent_message(challenge_id, message, session.get(state_key, {}))
-    session[state_key] = result["state"]
-    session.modified = True
-    if challenge_id == 2:
-        evidence_state = result.get("state", {}).get("evidence", {})
-        for item in result.get("trace", []):
-            findings = []
-            if evidence_state.get("internal_response"):
-                findings.append("internal_response")
-            if evidence_state.get("credential_data"):
-                findings.append("credential_data")
-            if evidence_state.get("summary_generated"):
-                findings.append("external_summary")
+    state = agent_llm.normalize_state(session.get(state_key), challenge_id)
+    lowered = message.strip().lower()
+
+    def _finalize(state: dict, response: str, trace: list) -> tuple[dict, str, list]:
+        solved, snapshot = agent_llm.judge(challenge_id, state)
+        progress = agent_llm.progress(challenge_id, state)
+        state["last_evidence"] = snapshot
+        if solved and AGENT_FLAGS.get(challenge_id, "") not in response:
+            response += f'<br><span class="flag-highlight">flag: {AGENT_FLAGS[challenge_id]}</span>'
+        result = {
+            "response": response,
+            "state": state,
+            "solved": solved,
+            "trace": trace,
+            "progress": progress,
+        }
+        return result, response, trace
+
+    def _emit_events(state: dict, trace: list, user_message: str) -> None:
+        evidence = state.get("evidence", {})
+        snapshot = {
+            "user_url": bool(evidence.get("user_url")),
+            "internal_response": bool(evidence.get("internal_response")),
+            "credential_data": bool(evidence.get("credential_data")),
+            "external_summary": bool(evidence.get("summary_generated")),
+        }
+        for item in trace:
+            findings = [key for key in ("internal_response", "credential_data", "summary_generated")
+                        if evidence.get(key)]
             _agent_emit_event(
                 challenge_id,
                 event_type="tool_execution",
                 action=f"tool.{item.get('tool', 'unknown')}",
-                outcome=str(item.get("status", "completed")),
-                message="工具执行结果已记录为脱敏业务事实。",
-                input_value=message,
-                security_findings=tuple(findings),
-                invariant_results={
-                    "user_url": bool(evidence_state.get("user_url")),
-                    "internal_response": bool(evidence_state.get("internal_response")),
-                    "credential_data": bool(evidence_state.get("credential_data")),
-                    "external_summary": bool(evidence_state.get("summary_generated")),
-                },
-                metadata={"tool": item.get("tool"), "target_class": item.get("target_class", "")},
+                outcome="executed" if int(item.get("status", 500)) < 400 else "rejected",
+                message="工具已真实执行，副作用记录为脱敏业务事实。",
+                input_value=user_message,
+                security_findings=tuple(findings) if challenge_id == 2 else (),
+                invariant_results=snapshot if challenge_id == 2 else {},
+                metadata={"tool": item.get("tool"), "source": "llm_decision"},
             )
         if result.get("solved"):
             _agent_emit_event(
                 challenge_id,
                 event_type="agent_response",
-                action="answer.summarize",
-                outcome="sensitive_disclosed",
-                message="Agent 对外摘要包含内部凭证类数据，原文未写入审计事件。",
-                input_value=message,
-                security_findings=("internal_response", "credential_data", "external_summary"),
-                invariant_results={
-                    "user_url": bool(evidence_state.get("user_url")),
-                    "internal_response": bool(evidence_state.get("internal_response")),
-                    "credential_data": bool(evidence_state.get("credential_data")),
-                    "external_summary": bool(evidence_state.get("summary_generated")),
-                },
+                action="business_invariants_satisfied",
+                outcome="sensitive_disclosed" if challenge_id == 2 else "attack_chain_completed",
+                message="攻击链业务不变量已由真实工具副作用满足，原文未写入审计事件。",
+                input_value=user_message,
+                security_findings=("internal_response", "credential_data", "external_summary") if challenge_id == 2 else (),
+                invariant_results=snapshot if challenge_id == 2 else {"evidence": agent_llm.REQUIRED_EVIDENCE[challenge_id]},
             )
-    challenge = get_agent_challenge(challenge_id)
-    renderable_command = message.strip().lower() not in ("/", "/help", "/tools")
-    if renderable_command:
-        try:
-            result["response"] = _render_model_challenge_reply(
-                track="Agent 应用安全 Top 10",
-                title=f"{challenge['code']} {challenge['name']}",
-                objective=challenge.get("objective", ""),
-                user_input=message,
-                state_facts=result["response"],
-                solved=result["solved"],
-                flag=AGENT_FLAGS.get(challenge_id, ""),
-                max_tokens=220 if result["solved"] else 160,
+
+    result: dict[str, Any] = {}
+    if lowered in ("/", "/help", "/tools"):
+        tool_rows = "<br>".join(
+            f"<strong>{item['name']}</strong> - {item['description']}" for item in challenge["tools"]
+        )
+        response = (
+            "本题为真实 LLM 攻击场景：直接用自然语言与业务 Agent 对话，由模型真实决策工具调用；"
+            "也可以用 <code>/tool 工具名 key=value</code> 直达控制台显式执行。<br><br>"
+            "[可用工具]<br>" + tool_rows + "<br><br>[直达控制台]<br><code>/tool 工具名 key=value</code><br><code>/state</code> 查看攻击链证据。"
+        )
+        result = {"response": response, "state": state, "solved": False, "trace": [],
+                  "progress": agent_llm.progress(challenge_id, state)}
+        session[state_key] = state
+        session.modified = True
+        return _agent_response_json(challenge, result)
+    if lowered == "/state":
+        solved, snapshot = agent_llm.judge(challenge_id, state)
+        lines = [f"- {key}: {'已满足' if ok else '未满足'}" for key, ok in snapshot.items()]
+        response = "[攻击链证据]<br>" + "<br>".join(lines) + "<br>通关条件：以上业务不变量全部由真实工具副作用满足。"
+        result = {"response": response, "state": state, "solved": solved, "trace": [],
+                  "progress": agent_llm.progress(challenge_id, state)}
+        session[state_key] = state
+        session.modified = True
+        return _agent_response_json(challenge, result)
+
+    if message.startswith("/tool"):
+        tool, args, error = agent_llm.parse_console_command(message)
+        trace_before = len(state.get("trace", []))
+        if error:
+            result = {"response": f"[调用拒绝] {error}", "state": state, "solved": False,
+                      "trace": [], "progress": agent_llm.progress(challenge_id, state)}
+        else:
+            try:
+                tool_result = agent_llm.execute_tool(challenge_id, tool, args, state)
+                response = (
+                    f"[控制台执行] {tool_result['tool']} 完成：{tool_result['message']}"
+                )
+            except agent_llm.ToolExecutionError as exc:
+                response = f"[调用拒绝] {exc.message}"
+            result, _response, _trace = _finalize(state, response, state.get("trace", [])[trace_before:])
+        session[state_key] = state
+        session.modified = True
+        _emit_events(state, result["trace"], message)
+        return _agent_response_json(challenge, result)
+
+    # ── 自然语言攻击路径：模型真实决策 ──
+    conversation = state.setdefault("conversation", [])
+    conversation.append({"role": "user", "content": message})
+    system_prompt = agent_llm.system_prompt(challenge_id)
+    history = conversation[:-1][-12:]
+    payload = message
+    final_reply = ""
+    trace_before = len(state.get("trace", []))
+    try:
+        for _round in range(agent_llm.MAX_TOOL_ROUNDS):
+            reply = _call_current_model(
+                system_prompt, payload,
+                history=history, max_tokens=320, temperature=0.2,
             )
-            result.setdefault("state", {})["model_rendered"] = True
-        except ModelReplyError as exc:
-            return jsonify({"error": str(exc), "code": "MODEL_REPLY_REQUIRED"}), exc.status_code
+            calls = agent_llm.parse_tool_calls(reply)
+            if not calls:
+                final_reply = reply
+                break
+            results = []
+            for tool, args in calls:
+                try:
+                    results.append(agent_llm.execute_tool(challenge_id, tool, args, state))
+                except agent_llm.ToolExecutionError as exc:
+                    results.append({"tool": tool, "status": exc.status, "message": exc.message, "data": {}})
+            result_block = agent_llm.build_tool_result_block(results)
+            history = history + [
+                {"role": "assistant", "content": reply},
+                {"role": "user", "content": result_block},
+            ][-12:]
+            conversation.append({"role": "assistant", "content": reply})
+            conversation.append({"role": "user", "content": result_block})
+            payload = result_block
+            final_reply = reply
+        else:
+            final_reply = final_reply or reply
+    except ModelReplyError as exc:
+        conversation.pop()  # 未产生模型回复，回滚本轮用户消息
+        session[state_key] = state
+        session.modified = True
+        return jsonify({
+            "error": str(exc) + " 也可以使用 /tool 直达控制台显式执行工具链。",
+            "code": "MODEL_REPLY_REQUIRED",
+        }), exc.status_code
+
+    # 丢弃本轮的工具结果伪消息，只保留用户消息与模型答复
+    state["conversation"] = [item for item in conversation if not str(item.get("content", "")).startswith("[TOOL_RESULT]")][-16:]
+    last_content = str(state["conversation"][-1].get("content", "")) if state["conversation"] else ""
+    if final_reply and final_reply != last_content and not agent_llm.parse_tool_calls(final_reply):
+        state["conversation"].append({"role": "assistant", "content": final_reply})
+    result, _response, _trace = _finalize(state, final_reply or "[Agent 未返回业务答复]", state.get("trace", [])[trace_before:])
+    session[state_key] = state
+    session.modified = True
+    _emit_events(state, result["trace"], message)
+    return _agent_response_json(challenge, result)
+
+
+def _agent_response_json(challenge: dict, result: dict) -> Any:
     return jsonify({
         "response": result["response"],
         "extra": {
@@ -2962,7 +3061,7 @@ def api_agent_chat(challenge_id: int):
         "debug": {
             "track": "agent",
             "scenario": challenge["code"],
-            "state": result["state"],
+            "state": {"evidence": result["state"].get("evidence", {}), "records_keys": sorted(result["state"].get("records", {}))},
             "tool_trace": result["trace"],
             "progress": result["progress"],
         },

@@ -7,7 +7,7 @@
 DVLAA 是面向大模型与智能体应用安全学习的**中文漏洞靶场**（Flask Web 应用），由五个赛道组成，共 **81 道本地题目**：
 
 - **24 道 OWASP LLM 题目**：10 个大类（LLM01–LLM10），其中 LLM01 提示词注入含 12 个子关卡。
-- **10 道 Agent 应用安全题目**（ASI01–ASI10）：每题一个模拟业务系统实验室，题目页提供业务审计任务、工具命令交互与含修复设计的题解（WP）。
+- **10 道 Agent 应用安全题目**（ASI01–ASI10）：真实 LLM 攻击轨道——每题一个带脆弱安全策略的业务 Agent 人设，玩家用自然语言（或借业务内容夹带的间接注入）真实诱导模型决策工具调用，后端**真实执行**工具副作用（执行计划改写、凭证外发、备份删除等），判定只认真实副作用对应的业务不变量；`/tool` 直达控制台与自然语言共用同一套执行器与判定器。
 - **11 道 AI 综合攻防题目**：独立会话、本地判定器、专属 Flag，WP 覆盖业务基线、状态机关联、复现步骤与修复设计。
 - **30 道 AWDP 攻防赛题目**：AWDP01-10 映射 Dify/RAGFlow/Langflow/Flowise/Open WebUI/n8n 公开 CVE；AWDP11-20 改编自 AWDP 赛事真题、AWDP21-30 改编自同赛事真题。附件源码保存在 `dvlaa/content/awdp_finals/<NN>/{vulnerable,fixed}`，共享判定引擎在 `integrations/targets/finals_core.py`（native 目标与 console 回归双端同源，PRELIM_IDS/FINALS_IDS 分段），补丁契约按 language 字段区分 python/text/js 三类静态检查。**双轨环境**——产品仿真模拟轨默认可用（`integrations/targets/`），官方真实容器轨按需一键启动；同一套 Flag 判定、补丁部署与回归逻辑。全部流量经 5080 单端口网关路由，不额外占用宿主机端口。
 - **6 道真实赛题**（REAL01–REAL06）：改编自真实 AI 安全竞赛的大模型投毒赛道。附件题提供只读材料工作区 + 交互式判定动作；REAL05 另有独立同源 Web 环境（`/real-web/5/`）。WP 通过按钮按需加载。
@@ -70,7 +70,8 @@ dvlaa/
     awdp_finals_content.py #   AWDP11-30 赛事真题题库、补丁契约与源码包加载器
     awdp_finals/           #   赛事附件源码包（<NN>/{vulnerable,fixed}/）
     real_challenges.py     #   REAL 六题题面、材料工作区、判定动作与 WP（writeup_sections）
-    agent_challenges.py    #   Agent Top 10 元数据与 WP
+    agent_challenges.py    #   Agent Top 10 元数据、自然语言官方 payload 与 WP
+    agent_llm_track.py     #   Agent 赛道真实 LLM 攻击轨道（脆弱人设提示词、真实工具执行器、证据判定）
     extended_challenges.py #   综合攻防 11 题题库与判定
     official_payloads.py / scenario_content.py / writeup_details.py ...
   modules/                 # 业务模块
