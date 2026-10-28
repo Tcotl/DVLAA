@@ -2763,17 +2763,14 @@ def api_challenge_source(level: int, sub: int):
 
 @app.route("/api/agent-source/<int:challenge_id>", methods=["GET"])
 def api_agent_source(challenge_id: int):
-    """返回当前 Agent 题目的运行提示、场景配置和核心状态机源码。"""
+    """返回当前 Agent 题目的真实攻击轨道提示词、运行配置与核心源码。"""
     challenge = get_agent_challenge(challenge_id)
     if challenge is None:
         return jsonify({"error": "题目不存在"}), 404
 
     flag = AGENT_FLAGS.get(challenge_id, "")
     tools = [item["name"] for item in challenge["tools"]]
-    system_prompt = f"""你是 {challenge['role']}，运行在 {challenge['target']}。
-当前任务：{challenge['objective']}
-交互规则：用户输入 /tools 查看能力清单，输入 /tool 工具名 key=value 调用工具。
-安全验证点：外部内容、工具返回、长期记忆、Agent 间消息或执行器参数只有按场景链路逐步命中时，才会推进状态并返回本题 Flag。"""
+    required = agent_llm.REQUIRED_EVIDENCE[challenge_id]
     runtime_config = {
         "track": "Agent 应用安全 Top 10",
         "id": challenge_id,
@@ -2784,31 +2781,43 @@ def api_agent_source(challenge_id: int):
         "role": challenge["role"],
         "objective": challenge["objective"],
         "tools": tools,
-        "stages": len(SCENARIO_STEPS[challenge_id]),
-        "state_gate": "本地场景执行器只负责工具链顺序和参数校验",
-        "visible_reply": "由当前 LLM 根据工具状态事实生成最终可见回复",
+        "attack_mode": "真实 LLM 攻击轨道：自然语言由模型决策 TOOL_CALL，/tool 直达控制台显式执行",
+        "required_evidence": required,
+        "state_gate": "判定只认真实工具副作用对应的业务不变量",
+        "visible_reply": "自然语言路径的回复即模型真实输出；控制台路径返回确定性业务结果",
         "model": modelsel.current_public_entry().get("name"),
         "flag": "flag{RUNTIME_RANDOM_FLAG}",
     }
-    scenario_source = f"SCENARIO_STEPS[{challenge_id}] = " + json.dumps(
-        SCENARIO_STEPS[challenge_id], ensure_ascii=False, indent=4
+    scenario_source = (
+        f"REQUIRED_EVIDENCE[{challenge_id}] = " + json.dumps(required, ensure_ascii=False, indent=4)
+        + "\n\n# 参考直达控制台路径（SCENARIO_STEPS 文档化保留）\n"
+        + f"SCENARIO_STEPS[{challenge_id}] = " + json.dumps(
+            SCENARIO_STEPS[challenge_id], ensure_ascii=False, indent=4
+        )
     )
+    source_files: list[str] = ["content/agent_challenges.py"]
     try:
-        implementation_source = inspect.getsource(process_agent_message) + "\n\n" + scenario_source
-        source_file = inspect.getsourcefile(process_agent_message)
-        source_files = [str(Path(source_file).relative_to(Path(__file__).parent))] if source_file else ["content/agent_challenges.py"]
-    except (OSError, TypeError, ValueError):
+        runner = agent_llm._RUNNERS[challenge_id]
+        implementation_source = "\n\n".join([
+            "# 脆弱业务人设提示词（漏洞即安全策略）\n" + agent_llm.system_prompt(challenge_id),
+            "# 真实工具执行器（真实读写会话业务状态）\n" + inspect.getsource(runner),
+            "# 证据判定（只认真实副作用）\n" + inspect.getsource(agent_llm.judge),
+            scenario_source,
+        ])
+        runner_file = inspect.getsourcefile(runner)
+        if runner_file:
+            source_files.insert(0, str(Path(runner_file).relative_to(Path(__file__).parent)))
+    except (OSError, TypeError, ValueError, KeyError):
         implementation_source = scenario_source
-        source_files = ["content/agent_challenges.py"]
 
     return jsonify({
         "title": f"{challenge['code']} · {challenge['name']}",
-        "system_prompt": _mask_learning_secrets(system_prompt, flag),
+        "system_prompt": _mask_learning_secrets(agent_llm.system_prompt(challenge_id), flag),
         "configuration": runtime_config,
         "configuration_source": "AGENT_RUNTIME_CONFIG = " + json.dumps(runtime_config, ensure_ascii=False, indent=4),
         "implementation_source": _mask_learning_secrets(implementation_source, flag),
         "source_files": sorted(set(source_files)),
-        "note": "Agent 题通过工具调用状态机推进，最终可见回复由当前 LLM 根据工具状态事实生成；运行时随机 Flag 已替换为教学占位符。",
+        "note": "Agent 题为真实 LLM 攻击轨道：系统提示词中的安全策略即漏洞载体，模型输出的 TOOL_CALL 由后端真实执行，判定只认真实副作用；运行时随机 Flag 已替换为教学占位符。",
     })
 
 
