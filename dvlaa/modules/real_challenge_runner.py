@@ -400,9 +400,16 @@ def _dispatch_action(challenge_id: int, action: str, params: dict[str, Any], sta
                 return "ledger 检查需要聚焦 BLOCK 候选。", {}, ("wrong_label_scope",)
             bundle = _adapter_bundle()
             candidates = [row for row in bundle["ledger"] if row.get("label") == "BLOCK"]
-            evidence.update({"ledger_inspected": True, "candidate_count": len(_adapter_motifs())})
-            details = {"candidate_count": len(_adapter_motifs()), "block_records": len(candidates), "integrity": "公开 ledger 已读取"}
-            return "已读取 BLOCK ledger，并保留多个同标签候选；下一步必须重放适配器。", details, ("candidate_ambiguity",)
+            motifs = _adapter_motifs()
+            evidence.update({"ledger_inspected": True, "candidate_count": len(motifs)})
+            # 候选短语随响应返回：控制台与托管 Agent 无页面表格，闭环依赖此列表。
+            details = {
+                "candidate_count": len(motifs),
+                "candidate_phrases": motifs,
+                "block_records": len(candidates),
+                "integrity": "公开 ledger 已读取",
+            }
+            return "已读取 BLOCK ledger，同标签候选如下，需逐条重放定位真实触发短语。", details, ("candidate_ambiguity",)
         if action == "adapter.replay":
             if not evidence.get("ledger_inspected"):
                 return "请先检查 ledger，不能跳过候选来源审计。", {}, ("missing_ledger_evidence",)

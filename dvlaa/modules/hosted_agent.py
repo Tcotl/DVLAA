@@ -166,7 +166,9 @@ def _brief(item: dict[str, Any]) -> str:
         from ..content.real_challenges import get_real_challenge, materials_content
         challenge = get_real_challenge(item["id"]) or {}
         actions = "；".join(
-            f"{a['name']}（字段：{'、'.join(f['name'] for f in a.get('fields', []))}）"
+            f"{a['name']}（字段：" + "、".join(
+                f"{f['name']}={f.get('placeholder') or f.get('default', '')}" for f in a.get("fields", [])
+            ) + "）"
             for a in challenge.get("actions", [])
         )
         materials = "；".join(m["path"] for m in materials_content(item["id"]))
@@ -174,7 +176,7 @@ def _brief(item: dict[str, Any]) -> str:
             f"题目：{item['code']} {challenge.get('name', '')}",
             f"任务目标：{challenge.get('objective', '')}",
             f"提示：{'；'.join(challenge.get('hints', [])[:2])}",
-            f"可用判定动作：{actions}",
+            f"可用判定动作（含字段参考值）：{actions}",
             f"附件材料（HTTP GET 下载）：{materials or '无'}",
             "交互方式：执行判定动作（action=real）。动作响应中实际出现 Flag 后提交。",
         ]
