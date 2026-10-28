@@ -1,0 +1,22 @@
+{# CRM 记忆中心：记忆表 + 客户列表 + 助手 #}
+<style>
+.mm-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px dashed var(--lab-line);font-size:12.5px}
+.mm-key{font-family:ui-monospace,Menlo,monospace;color:#7aa2f7}
+.mm-scope{padding:2px 8px;border-radius:10px;font-size:10.5px;background:#16233a}
+.mm-scope.system{color:#f59e0b}
+</style>
+<div class="lab-grid2">
+    <div style="display:flex;flex-direction:column;gap:14px;">
+        <section class="lab-card"><div class="lab-card-head"><span>团队长期记忆 · team_policy</span><span class="sub">system-memory 优先级</span></div>
+            <div>{% for key, value, scope in theme.props.memories %}
+            <div class="mm-row"><span class="mm-key">{{ key }}</span><b>{{ value }}</b><span class="mm-scope {{ scope }}">{{ scope }}</span></div>
+            {% endfor %}</div>
+        </section>
+        <section class="lab-card"><div class="lab-card-head"><span>客户列表</span></div>
+            <div>{% for cid, name, level in theme.props.customers %}
+            <div class="mm-row"><span class="mm-key">{{ cid }}</span><span>{{ name }}</span><span class="mm-scope">{{ level }}</span></div>
+            {% endfor %}</div>
+        </section>
+    </div>
+    {% include 'labs/_chat.html' %}
+</div>

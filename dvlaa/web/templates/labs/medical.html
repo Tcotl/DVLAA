@@ -1,0 +1,26 @@
+{# 医疗系统：患者/流程记录表 + 运维通道 + 助手 #}
+<style>
+.md-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.md-table th{color:#0f766e;text-align:left;padding:8px 10px;border-bottom:2px solid var(--lab-line);font-size:11.5px;background:#0c1a18}
+.md-table td{padding:9px 10px;border-bottom:1px solid var(--lab-line)}
+.md-badge{padding:2px 8px;border-radius:10px;font-size:10.5px;background:#16233a}
+</style>
+<div class="lab-grid2" style="grid-template-columns:1.35fr 1fr;">
+    <div style="display:flex;flex-direction:column;gap:14px;">
+        <section class="lab-card"><div class="lab-card-head"><span>{% if '急救' in theme.title %}急救流程库{% else %}患者登记{% endif %}</span><span class="sub">{{ theme.title }}</span></div>
+            <div style="overflow:auto;"><table class="md-table">
+                {% if '急救' in theme.title %}
+                <thead><tr><th>流程条目</th><th>版本</th><th>状态</th></tr></thead>
+                <tbody>{% for p in theme.props.patients %}<tr><td>{{ p[0] }}</td><td>{{ p[1] }}</td><td><span class="md-badge">{{ p[2] }}</span></td></tr>{% endfor %}</tbody>
+                {% else %}
+                <thead><tr><th>MRN</th><th>患者</th><th>科室</th><th>状态</th></tr></thead>
+                <tbody>{% for p in theme.props.patients %}<tr><td style="color:#7aa2f7;font-family:ui-monospace,Menlo,monospace;">{{ p[0] }}</td><td>{{ p[1] }}</td><td>{{ p[2] }}</td><td><span class="md-badge">{{ p[3] }}</span></td></tr>{% endfor %}</tbody>
+                {% endif %}
+            </table></div>
+        </section>
+        <section class="lab-card"><div class="lab-card-head"><span>系统通道</span></div>
+            <div style="padding:10px;">{% for o in theme.props.ops %}<div class="lab-kv"><span>{{ o[0] }}</span><b>{{ o[1] }}</b></div>{% endfor %}</div>
+        </section>
+    </div>
+    {% include 'labs/_chat.html' %}
+</div>

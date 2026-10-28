@@ -1,0 +1,20 @@
+{# 消息总线：队列时间线 + worker 状态 + 助手 #}
+<style>
+.bq-line{position:relative;padding:12px 14px 12px 30px;border-bottom:1px dashed var(--lab-line);font-size:12.5px}
+.bq-line::before{content:"";position:absolute;left:13px;top:18px;width:8px;height:8px;border-radius:50%;background:var(--lab-accent)}
+.bq-line::after{content:"";position:absolute;left:16px;top:26px;bottom:-12px;width:2px;background:var(--lab-line)}
+.bq-role{padding:2px 8px;border-radius:10px;font-size:10.5px;background:#16233a;color:#aebfd6}
+</style>
+<div class="lab-grid2">
+    <div style="display:flex;flex-direction:column;gap:14px;">
+        <section class="lab-card"><div class="lab-card-head"><span>消息队列</span><span class="sub">X-Agent-Role 路由</span></div>
+            <div>{% for sender, role, signed, body in theme.props.queue %}
+            <div class="bq-line"><span class="bq-role">{{ role }}</span> <b style="color:#7aa2f7">{{ sender }}</b> · {{ signed }}<br><span style="color:var(--lab-dim);font-size:11.5px;">{{ body }}</span></div>
+            {% endfor %}</div>
+        </section>
+        <section class="lab-card"><div class="lab-card-head"><span>Worker 节点</span></div>
+            <div style="padding:10px;">{% for w in theme.props.workers %}<div class="lab-kv"><span>{{ w[0] }}</span><b>{{ w[1] }} · {{ w[2] }}</b></div>{% endfor %}</div>
+        </section>
+    </div>
+    {% include 'labs/_chat.html' %}
+</div>

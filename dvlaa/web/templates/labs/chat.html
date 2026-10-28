@@ -1,0 +1,34 @@
+{# 对话式业务台：会话元信息 + 助手 #}
+{% if theme.props.session_meta or theme.props.trust_meter %}
+<section class="lab-card"><div class="lab-card-head"><span>会话信息</span><span class="sub">{{ theme.title }}</span></div>
+    <div style="padding:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        {% for m in theme.props.session_meta %}<span class="tag" style="padding:4px 10px;border:1px solid var(--lab-line);border-radius:12px;font-size:11.5px;color:#aebfd6;background:#0d1626;">{{ m }}</span>{% endfor %}
+    </div>
+</section>
+{% endif %}
+{% if theme.props.templates %}
+<section class="lab-card"><div class="lab-card-head"><span>归档模板</span></div>
+    <div style="padding:10px 12px;">{% for t in theme.props.templates %}<div class="lab-kv"><span style="font-family:ui-monospace,Menlo,monospace;">{{ t }}</span></div>{% endfor %}</div>
+</section>
+{% endif %}
+{% if theme.props.samples %}
+<section class="lab-card"><div class="lab-card-head"><span>话术样例</span></div>
+    <div style="padding:10px 12px;">{% for s in theme.props.samples %}<div class="lab-kv"><span>{{ s }}</span></div>{% endfor %}</div>
+</section>
+{% endif %}
+{% if theme.props.config_preview %}
+<section class="lab-card"><div class="lab-card-head"><span>配置预览</span><span class="sub">脱敏展示</span></div>
+    <div style="padding:10px 12px;">{% for k, v in theme.props.config_preview.items() %}<div class="lab-kv"><span>{{ k }}</span><b style="font-family:ui-monospace,Menlo,monospace;">{{ v }}</b></div>{% endfor %}</div>
+</section>
+{% endif %}
+{% if theme.props.chain_steps %}
+<section class="lab-card"><div class="lab-card-head"><span>推理链规范</span><span class="sub">{{ theme.props.case_no }}</span></div>
+    <div style="padding:10px 12px;">{% for s in theme.props.chain_steps %}<div class="lab-kv"><span>{{ s }}</span></div>{% endfor %}</div>
+</section>
+{% endif %}
+{% if theme.props.archive or theme.props.exports or theme.props.records %}
+<section class="lab-card"><div class="lab-card-head"><span>业务记录</span></div>
+    <div style="padding:10px 12px;">{% for r in (theme.props.archive or theme.props.exports or theme.props.records) %}<div class="lab-kv"><span>{{ r }}</span></div>{% endfor %}</div>
+</section>
+{% endif %}
+{% include 'labs/_chat.html' %}

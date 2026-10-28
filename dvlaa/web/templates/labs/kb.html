@@ -1,0 +1,23 @@
+{# 知识库：条目表 + 注入器表单 + 检索/助手 #}
+<style>
+.kb-entry{display:flex;justify-content:space-between;padding:9px 12px;border-bottom:1px dashed var(--lab-line);font-size:12.5px}
+.kb-inject{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;font-size:12px;color:var(--lab-dim)}
+.kb-inject input{background:#0a111e;border:1px solid var(--lab-line);border-radius:5px;color:var(--lab-text);padding:7px 9px;font:12px/1.4 ui-monospace,Menlo,monospace}
+</style>
+<div class="lab-grid2">
+    <section class="lab-card"><div class="lab-card-head"><span>知识条目</span><span class="sub">当前索引</span></div>
+        <div style="overflow:auto;">{% for e in theme.props.entries %}<div class="kb-entry"><span>{{ e[0] }}</span><b style="color:#7aa2f7;">{{ e[1] }}</b></div>{% endfor %}</div>
+        {% if theme.props.injectors %}
+        <div style="border-top:1px solid var(--lab-line);padding:12px;">
+            <div class="lab-hint" style="margin-bottom:8px;">知识注入器（把下方值填入输入框提交即可写入）</div>
+            {% set inj_raw = theme.props.injectors[1] if theme.props.injectors|length > 1 else theme.props.injectors[0] %}
+            {% set inj = [inj_raw[0] if inj_raw|length > 0 else 'key', inj_raw[1] if inj_raw|length > 1 else 'value'] %}
+            <div class="kb-inject">
+                <span>{{ inj[0] }}=</span><input readonly value="{{ inj[1] }}" id="kbInjectValue">
+                <span></span><button class="lab-btn ghost" style="width:max-content;font-size:11.5px;" onclick="document.getElementById('userInputArea').value={% if track == 'owasp' and level == 8 %}{{ ('/document add title=' + inj[0] + ' content=' + inj[1]) | tojson }}{% elif track == 'owasp' and level == 4 %}{{ ('/data add key=' + inj[0] + ' value=' + inj[1]) | tojson }}{% elif track == 'extended' %}{{ ('/kb add ' + inj[0] + '=' + inj[1] + ' 然后 /kb sync') | tojson }}{% else %}{{ inj[1] | tojson }}{% endif %};document.getElementById('userInputArea').focus()">填入输入框</button>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+    {% include 'labs/_chat.html' %}
+</div>

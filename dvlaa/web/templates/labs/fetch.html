@@ -1,0 +1,20 @@
+{# 抓取浏览器：地址栏 + 历史 + 预览/助手 #}
+<style>
+.fx-bar{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid var(--lab-line)}
+.fx-bar input{flex:1;background:#0a111e;border:1px solid var(--lab-line);border-radius:16px;color:var(--lab-text);padding:8px 14px;font:12.5px/1.4 ui-monospace,Menlo,monospace}
+.fx-hist{font:12px/1.9 ui-monospace,Menlo,monospace;color:#8fb7dd;padding:10px 12px}
+.fx-badge{padding:1px 7px;border-radius:9px;font-size:10.5px;background:#16233a}
+</style>
+<div class="lab-grid2" style="grid-template-columns:1.35fr 1fr;">
+    <section class="lab-card"><div class="lab-card-head"><span>抓取浏览器</span><span class="sub">出口与实例同网段</span></div>
+        <div class="fx-bar"><input readonly value="{{ theme.props.bookmarks[0] if theme.props.bookmarks else 'https://' }}"><button class="lab-btn" onclick="document.getElementById('userInputArea').value='帮我抓取并总结：'+this.previousElementSibling.value;document.getElementById('userInputArea').focus()">抓取</button></div>
+        <div style="padding:10px 12px;border-bottom:1px solid var(--lab-line);">
+            {% for b in theme.props.bookmarks %}<button class="lab-btn ghost" style="margin:2px 4px;font-size:11.5px;padding:4px 10px;" onclick="document.getElementById('userInputArea').value='帮我抓取并总结：{{ b }}';document.getElementById('userInputArea').focus()">{{ b.split('/')[2] }}{{ b.split('/',3)[3] if b.count('/') > 2 else '' }}</button>{% endfor %}
+        </div>
+        <div style="padding:10px 12px;">
+            <div class="lab-hint" style="margin-bottom:6px;">抓取历史</div>
+            <div class="fx-hist">{% for url, code, cls in theme.props.history %}<div>{{ url }} <span class="fx-badge">{{ code }}</span> <span class="fx-badge" style="{% if cls == '凭证类' %}color:#f87171{% elif cls == '内网' %}color:#f59e0b{% else %}color:#4ade80{% endif %}">{{ cls }}</span></div>{% endfor %}</div>
+        </div>
+    </section>
+    {% include 'labs/_chat.html' %}
+</div>

@@ -1,0 +1,28 @@
+{# 压力测试：请求计数仪表 + 助手 #}
+<style>
+.pr-gauge{display:flex;align-items:center;gap:18px;justify-content:center;padding:26px}
+.pr-num{font-size:52px;font-weight:800;color:#fff;font-family:ui-monospace,Menlo,monospace}
+.pr-track{height:10px;background:#16233a;border-radius:5px;overflow:hidden;margin:0 22px 18px}
+.pr-fill{height:100%;background:linear-gradient(90deg,#4ade80,#f59e0b,#ef4444);transition:width .3s}
+</style>
+<section class="lab-card"><div class="lab-card-head"><span>请求洪峰监测</span><span class="sub">{{ theme.props.window_seconds }} 秒滑动窗口 · 阈值 {{ theme.props.threshold }}</span></div>
+    <div class="pr-gauge"><div><div class="pr-num" id="prCount">0</div><div style="text-align:center;color:var(--lab-dim);font-size:11px">窗口内请求</div></div>
+        <div style="color:var(--lab-dim);font-size:22px;">/</div>
+        <div><div class="pr-num" style="color:#f59e0b;">{{ theme.props.threshold }}</div><div style="text-align:center;color:var(--lab-dim);font-size:11px">DoS 阈值</div></div>
+    </div>
+    <div class="pr-track"><div class="pr-fill" id="prFill" style="width:0%"></div></div>
+</section>
+{% include 'labs/_chat.html' %}
+<script>
+(() => {
+    const messages = document.getElementById("chatMessages");
+    const update = () => {
+        const replies = messages.querySelectorAll(".bubble.assistant");
+        let count = 0;
+        replies.forEach((node) => { const m = node.textContent.match(/([0-9]+)\\s*\\/\\s*{{ theme.props.threshold }}/); if (m) count = Math.max(count, Number(m[1])); });
+        document.getElementById("prCount").textContent = count;
+        document.getElementById("prFill").style.width = Math.min(100, count / {{ theme.props.threshold }} * 100) + "%";
+    };
+    new MutationObserver(update).observe(messages, {childList: true, subtree: true});
+})();
+</script>

@@ -1,0 +1,10 @@
+{# REAL 取证台：清单表 + 说明 #}
+<div class="lab-grid2">
+    <section class="lab-card"><div class="lab-card-head"><span>Release Manifest</span><span class="sub">签名信息</span></div>
+        <div style="padding:10px 12px;">{% for k, v in theme.props.manifest %}<div class="lab-kv"><span>{{ k }}</span><b style="font-family:ui-monospace,Menlo,monospace;">{{ v }}</b></div>{% endfor %}</div>
+    </section>
+    <section class="lab-card"><div class="lab-card-head"><span>Training Ledger</span></div>
+        <div style="padding:12px 14px;color:var(--lab-dim);font-size:12.5px;">{{ theme.props.ledger_note }}</div>
+    </section>
+</div>
+{% include 'labs/_real.html' %}

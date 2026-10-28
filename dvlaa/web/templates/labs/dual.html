@@ -1,0 +1,15 @@
+{# 双模型对比：左右双栏回答视图 + 提问 #}
+<style>
+.du-col{border:1px solid var(--lab-line);border-radius:10px;overflow:hidden}
+.du-head{padding:10px 14px;font-size:12.5px;font-weight:700;border-bottom:1px solid var(--lab-line)}
+.du-body{min-height:200px;padding:14px;color:var(--lab-dim);font-size:12.5px}
+</style>
+<div class="lab-grid2">
+    {% for side in [theme.props.left, theme.props.right] %}
+    <div class="du-col">
+        <div class="du-head" style="background:{% if loop.first %}#12233c{% else %}color-mix(in srgb,var(--lab-accent) 22%,#0d1626){% endif %}">{{ side.name }}</div>
+        <div class="du-body">{{ side.desc }}<br><br>发送问题后，两个版本的回答将分别显示在这里（对话记录见下方消息区）。</div>
+    </div>
+    {% endfor %}
+</div>
+{% include 'labs/_chat.html' %}

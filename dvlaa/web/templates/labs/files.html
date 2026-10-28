@@ -1,0 +1,23 @@
+{# 文件管理器：目录树 + 工单列表 + 助手 #}
+<style>
+.fl-wrap{display:grid;grid-template-columns:1fr 1.2fr;gap:14px}
+.fl-tree{font:12.5px/2 ui-monospace,Menlo,monospace;padding:12px;color:#c9d7e8}
+.fl-dir{color:#f6c177}.fl-file{color:#a8c7e8}.fl-secret{color:#f87171}
+.fl-badge{font:11px/1.4 Inter,sans-serif;color:var(--lab-dim)}
+</style>
+<div class="fl-wrap">
+    <div style="display:flex;flex-direction:column;gap:14px;">
+        <section class="lab-card"><div class="lab-card-head"><span>应用目录</span><span class="sub">/app</span></div>
+            <div class="fl-tree">
+                {% set root = theme.props.tree[0] %}<div class="fl-dir">{{ root }}/</div>
+                {% for entry in theme.props.tree[1] %}
+                <div style="padding-left:18px;" class="{% if '.' in entry and entry != 'agent_runtime/' %}{% if entry.startswith('.') %}fl-secret{% else %}fl-file{% endif %}{% else %}fl-dir{% endif %}">{{ entry }}</div>
+                {% endfor %}
+            </div>
+        </section>
+        <section class="lab-card"><div class="lab-card-head"><span>维护工单</span></div>
+            <div style="padding:10px;">{% for w in theme.props.workers %}<div class="lab-kv"><span>{{ w[0] }}</span><b class="fl-badge">{{ w[1] }}</b></div>{% endfor %}</div>
+        </section>
+    </div>
+    {% include 'labs/_chat.html' %}
+</div>

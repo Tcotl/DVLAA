@@ -1,0 +1,12 @@
+{# REAL 工件分析：zip 成员树 + 契约表 #}
+<div class="lab-grid2">
+    <section class="lab-card"><div class="lab-card-head"><span>工件容器</span><span class="sub">只读 · 不反序列化</span></div>
+        <div style="padding:12px 14px;font:12.5px/2 ui-monospace,Menlo,monospace;color:#c9d7e8;">
+            {% for m in theme.props.members %}<div>{{ m }}</div>{% endfor %}
+        </div>
+    </section>
+    <section class="lab-card"><div class="lab-card-head"><span>张量 / 元数据契约</span></div>
+        <div style="padding:10px 12px;">{% for k, v in theme.props.contract %}<div class="lab-kv"><span style="font-family:ui-monospace,Menlo,monospace;">{{ k }}</span><b>{{ v }}</b></div>{% endfor %}</div>
+    </section>
+</div>
+{% include 'labs/_real.html' %}

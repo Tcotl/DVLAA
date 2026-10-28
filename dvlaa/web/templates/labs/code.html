@@ -1,0 +1,48 @@
+{# 代码/IDE：编辑器窗格 + 列表面板 + 助手 #}
+<style>
+.cd-wrap{display:grid;grid-template-columns:1.25fr 1fr;gap:14px}
+.cd-code{background:#070d18;border:1px solid var(--lab-line);border-radius:8px;padding:14px;font:12.5px/1.8 ui-monospace,Menlo,monospace;color:#a8c7e8;min-height:220px;white-space:pre-wrap}
+.cd-tab{display:inline-block;padding:6px 12px;border:1px solid var(--lab-line);border-bottom:0;border-radius:7px 7px 0 0;font-size:12px;color:#aebfd6;background:#0d1626;margin-right:4px}
+.cd-lst{border:1px solid var(--lab-line);border-radius:8px;overflow:hidden}
+.cd-item{padding:10px 12px;border-bottom:1px solid var(--lab-line);font-size:12.5px}
+.cd-item b{color:#7aa2f7}
+</style>
+<div class="cd-wrap">
+    <div style="display:flex;flex-direction:column;gap:14px;">
+        <section class="lab-card"><div class="lab-card-head"><span>编辑器</span><span class="sub">只读快照</span></div>
+            <div style="padding:12px 14px;">
+                {% if theme.props.files %}{% for f in theme.props.files %}<span class="cd-tab">{{ f }}</span>{% endfor %}{% else %}<span class="cd-tab">main.workflow</span>{% endif %}
+                <div class="cd-code">{% if theme.props.cells %}{{ theme.props.cells | join("\n") }}{% elif theme.props.files %}# 当前工作区文件快照（只读展示）{% else %}pipeline:\n  - checkout\n  - build\n  - review-agent\n  - deploy{% endif %}</div>
+            </div>
+        </section>
+        {% if theme.props.pipeline %}
+        <section class="lab-card"><div class="lab-card-head"><span>流水线</span><span class="sub">CI 阶段</span></div>
+            <div style="padding:12px 14px;display:flex;gap:8px;flex-wrap:wrap;">
+                {% for stage, status in theme.props.pipeline %}
+                <span class="cd-tab" style="border-radius:14px;border-bottom:1px solid var(--lab-line);{% if status == '运行中' %}color:#f59e0b;{% elif status == '成功' %}color:#4ade80;{% endif %}">{{ stage }} · {{ status }}</span>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+        {% if theme.props.issues %}
+        <section class="lab-card"><div class="lab-card-head"><span>{% if track == 'agent' %}Issue 队列{% else %}审查队列{% endif %}</span></div>
+            <div class="cd-lst">{% for i in theme.props.issues %}
+                <div class="cd-item"><b>{{ i[0] }}</b> · {{ i[2] if track == 'agent' else i[1] }}<br><span style="color:var(--lab-dim);font-size:11.5px;">{% if track == 'agent' %}{{ i[1] }} · {{ i[3] }}{% else %}{{ i[2] }}{% endif %}</span></div>
+                {% endfor %}</div>
+        </section>
+        {% endif %}
+        {% if theme.props.token_scope %}
+        <section class="lab-card"><div class="lab-card-head"><span>权限 / 说明</span></div>
+            <div style="padding:10px;"><div class="lab-kv"><span>Token / 建议指标</span><b>{{ theme.props.token_scope }}</b></div></div>
+        </section>
+        {% endif %}
+        {% if theme.props.runtime %}
+        <section class="lab-card"><div class="lab-card-head"><span>运行时</span></div>
+            <div style="padding:10px;"><div class="lab-kv"><span>解释器</span><b>{{ theme.props.runtime }}</b></div></div>
+        </section>
+        {% endif %}
+        {% include 'labs/_chat.html' %}
+    </div>
+</div>

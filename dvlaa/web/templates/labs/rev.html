@@ -1,0 +1,10 @@
+{# REAL06：PE 逆向台 #}
+<div class="lab-grid2">
+    <section class="lab-card"><div class="lab-card-head"><span>lora_gate.exe</span><span class="sub">仅静态分析</span></div>
+        <div style="padding:10px 12px;">{% for k, v in theme.props.exe_meta %}<div class="lab-kv"><span>{{ k }}</span><b style="font-family:ui-monospace,Menlo,monospace;">{{ v }}</b></div>{% endfor %}</div>
+    </section>
+    <section class="lab-card"><div class="lab-card-head"><span>可打印字符串</span><span class="sub">ASCII ≥ 4</span></div>
+        <div style="padding:10px 12px;font:12px/1.9 ui-monospace,Menlo,monospace;color:#8fb7dd;">{% for s in theme.props.strings %}<div>{{ s }}</div>{% endfor %}</div>
+    </section>
+</div>
+{% include 'labs/_real.html' %}

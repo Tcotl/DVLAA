@@ -1,0 +1,18 @@
+{# 运维台：环境卡 + 资源组 + 备份卡 + 助手 #}
+<style>
+.op-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.op-card{border:1px solid var(--lab-line);border-radius:10px;padding:12px;background:#0d1626}
+.op-card h5{margin:0 0 8px;font-size:12px;color:var(--lab-dim)}
+.op-item{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0}
+.op-danger{color:#f87171}.op-ok{color:#4ade80}
+</style>
+<div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="op-grid">
+        {% for title, items in [("环境", theme.props.envs), ("资源 / 副本", theme.props.dbs), ("备份 / 策略", theme.props.backups)] %}
+        <div class="op-card"><h5>{{ title }}</h5>
+            {% for it in items %}<div class="op-item"><span>{{ it[0] }}</span><b class="{% set it_val = it[1]|string %}{% if '高危' in it_val or 'production' in it_val or '未设置' in it_val or '豁免' in it_val or '可访问' in it_val or '可继承' in it_val or '可关闭' in it_val %}op-danger{% else %}op-ok{% endif %}">{{ it[1] }}{% if it|length > 2 %}（{{ it[2] }}）{% endif %}</b></div>{% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% include 'labs/_chat.html' %}
+</div>

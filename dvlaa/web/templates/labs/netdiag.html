@@ -1,0 +1,32 @@
+{# 链路诊断：节点状态灯 + 延迟条 + 日志流 #}
+<style>
+.nd-node{border:1px solid var(--lab-line);border-radius:9px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;background:#0d1626}
+.nd-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:8px}
+.nd-dot.ok{background:#4ade80}.nd-dot.warn{background:#f59e0b}.nd-dot.bad{background:#ef4444}
+.nd-lat{height:6px;border-radius:3px;background:#16233a;overflow:hidden;width:120px}
+.nd-lat i{display:block;height:100%;background:var(--lab-accent)}
+.nd-flow{display:flex;flex-direction:column;gap:9px}
+.nd-log{font:11.5px/1.7 ui-monospace,Menlo,monospace;color:#8fb7dd;padding:10px 12px;background:#070d18;border-radius:8px;border:1px solid var(--lab-line)}
+</style>
+<div class="lab-grid2">
+    <section class="lab-card"><div class="lab-card-head"><span>链路拓扑</span><span class="sub">实时状态</span></div>
+        <div class="nd-flow" style="padding:14px;">
+            {% for name, status, latency in theme.props.nodes %}
+            <div class="nd-node"><span><span class="nd-dot {% if status == '正常' %}ok{% elif status == '告警' %}warn{% else %}bad{% endif %}"></span>{{ name }} · {{ status }}</span>
+                <span class="nd-lat"><i style="width:{{ latency }}%"></i></span></div>
+            {% endfor %}
+            {% if theme.props.alerts %}{% for a in theme.props.alerts %}<div class="lab-hint" style="color:#f59e0b;">[!] {{ a }}</div>{% endfor %}{% endif %}
+        </div>
+    </section>
+    {% if theme.props.loglines %}
+    <section class="lab-card"><div class="lab-card-head"><span>实时日志</span><span class="sub">最近事件</span></div>
+        <div style="padding:14px;"><div class="nd-log">{% for line in theme.props.loglines %}{{ line }}<br>{% endfor %}</div></div>
+    </section>
+    {% if theme.props.rules %}
+    <section class="lab-card"><div class="lab-card-head"><span>过滤规则</span></div>
+        <div style="padding:14px;">{% for r in theme.props.rules %}<div class="lab-kv"><span>{{ r }}</span></div>{% endfor %}</div>
+    </section>
+    {% endif %}
+    {% endif %}
+</div>
+{% include 'labs/_chat.html' %}

@@ -1,0 +1,11 @@
+<section class="lab-card">
+    <div class="lab-card-head">
+        <span>{{ theme.role }} · 判定动作</span>
+        <span class="sub lab-materials">附件：{% for m in materials %}<a href="{{ m }}" target="_blank" rel="noopener">{{ m.split('/')[-1] }}</a> {% endfor %}{% if not materials %}无{% endif %}</span>
+    </div>
+    <div class="lab-acts" id="labActions"></div>
+</section>
+<section class="lab-card">
+    <div class="lab-card-head"><span>动作输出</span><span class="sub lab-ev" id="labEvidence"></span></div>
+    <div style="padding:14px;"><div class="lab-out" id="labOutput">执行判定动作后，输出与证据显示在这里。</div></div>
+</section>

@@ -1,0 +1,32 @@
+{# 驾驶舱：指标卡 + 数据表/工具格 + 助手 #}
+<style>
+.ds-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ds-m{border:1px solid var(--lab-line);border-radius:9px;padding:12px;background:linear-gradient(160deg,#0d1626,#0b1526)}
+.ds-m span{font-size:11px;color:var(--lab-dim)}.ds-m b{display:block;font-size:19px;color:#fff;margin-top:3px}
+table.ds{width:100%;border-collapse:collapse;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+table.ds th{color:var(--lab-dim);text-align:left;padding:7px 10px;border-bottom:1px solid var(--lab-line);font-size:11px}
+table.ds td{padding:8px 10px;border-bottom:1px solid var(--lab-line);color:#c9d7e8}
+.ds-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.ds-tool{border:1px solid var(--lab-line);border-radius:9px;padding:11px;background:#0d1626}
+.ds-tool b{color:#7aa2f7;font-family:ui-monospace,Menlo,monospace;font-size:12px}.ds-tool span{display:block;color:var(--lab-dim);font-size:11px;margin-top:2px}
+</style>
+<div style="display:flex;flex-direction:column;gap:14px;">
+    <section class="lab-card"><div class="lab-card-head"><span>运营指标</span><span class="sub">{{ theme.title }}</span></div>
+        <div style="padding:14px;"><div class="ds-metrics">
+            {% for m in theme.props.metrics %}<div class="ds-m"><span>{{ m[0] }}</span><b>{{ m[1] }}</b></div>{% endfor %}
+        </div></div>
+    </section>
+    <div class="lab-grid2">
+        {% if theme.props.tools_grid %}
+        <section class="lab-card"><div class="lab-card-head"><span>已注册工具</span></div>
+            <div style="padding:14px;"><div class="ds-tools">{% for t in theme.props.tools_grid %}<div class="ds-tool"><b>{{ t[0] }}</b><span>{{ t[1] }}</span></div>{% endfor %}</div></div>
+        </section>
+        {% elif theme.props.table_rows %}
+        <section class="lab-card"><div class="lab-card-head"><span>{{ theme.props.preview_note or '数据明细' }}</span></div>
+            <div style="padding:8px 10px 12px;overflow:auto;"><table class="ds"><thead><tr>{% for h in theme.props.table_head %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+            <tbody>{% for r in theme.props.table_rows %}<tr>{% for cell in r %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+        </section>
+        {% endif %}
+        {% include 'labs/_chat.html' %}
+    </div>
+</div>

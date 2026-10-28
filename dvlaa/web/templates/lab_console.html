@@ -14,22 +14,22 @@
 .lab-chip{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:11px;color:var(--lab-dim)}
 .lab-chip .tag{padding:4px 9px;border:1px solid var(--lab-line);border-radius:12px;background:#0d1626}
 .lab-chip .tag.accent{border-color:var(--lab-accent);color:#fff;background:var(--lab-accent)}
-.lab-shell{display:grid;grid-template-columns:208px minmax(0,1fr);min-height:calc(100vh - 68px)}
+.lab-shell{display:grid;grid-template-columns:198px minmax(0,1fr);min-height:calc(100vh - 68px)}
 .lab-nav{border-right:1px solid var(--lab-line);padding:16px 10px;background:#0c1422}
 .lab-nav h4{margin:4px 8px 10px;font-size:11px;color:var(--lab-dim);font-weight:600}
 .lab-nav a{display:block;padding:9px 11px;border-radius:7px;color:#b9c9dd;text-decoration:none;font-size:12.5px;margin-bottom:3px}
 .lab-nav a.active{background:color-mix(in srgb,var(--lab-accent) 18%,transparent);color:#fff;border-left:2px solid var(--lab-accent)}
-.lab-main{display:flex;flex-direction:column;padding:18px;gap:14px;max-width:980px;width:100%;margin:0 auto}
+.lab-main{display:flex;flex-direction:column;padding:18px;gap:14px;max-width:1080px;width:100%;margin:0 auto}
 .lab-flag{display:flex;gap:8px;align-items:center;background:var(--lab-panel);border:1px solid var(--lab-line);border-radius:9px;padding:10px 12px}
 .lab-flag input{flex:1;background:#0a111e;border:1px solid var(--lab-line);border-radius:6px;color:var(--lab-text);padding:8px 10px;font:13px/1.4 inherit}
 .lab-btn{border:0;border-radius:6px;padding:8px 16px;background:var(--lab-accent);color:#fff;font-weight:700;cursor:pointer;font-size:13px}
 .lab-btn.ghost{background:#16233a;color:#c7d6e8;border:1px solid var(--lab-line)}
 .lab-flag .msg{font-size:12px;color:var(--lab-dim)}
-.lab-card{background:var(--lab-panel);border:1px solid var(--lab-line);border-radius:10px;display:flex;flex-direction:column;flex:1;min-height:420px}
+.lab-card{background:var(--lab-panel);border:1px solid var(--lab-line);border-radius:10px;display:flex;flex-direction:column;min-height:0}
 .lab-card-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--lab-line);font-size:13px}
 .lab-card-head .sub{color:var(--lab-dim);font-size:11.5px}
-#chatMessages{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
-.bubble{max-width:80%;padding:10px 13px;border-radius:9px;font-size:13px;white-space:pre-wrap;word-break:break-word}
+#chatMessages{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:320px;max-height:520px}
+.bubble{max-width:82%;padding:10px 13px;border-radius:9px;font-size:13px;white-space:pre-wrap;word-break:break-word}
 .bubble.user{align-self:flex-end;background:var(--lab-accent);color:#fff}
 .bubble.assistant{align-self:flex-start;background:#16233a;border:1px solid var(--lab-line)}
 .bubble.system{align-self:center;color:var(--lab-dim);font-size:12px;background:#0d1626;border:1px dashed var(--lab-line);border-radius:7px}
@@ -54,7 +54,10 @@
 .lab-ev{display:flex;gap:6px;flex-wrap:wrap}
 .lab-ev .ok{color:#4ade80}.lab-ev .no{color:#64748b}
 .lab-materials{font-size:11.5px;color:var(--lab-dim)}.lab-materials a{color:#7aa2f7}
-@media (max-width:860px){.lab-shell{grid-template-columns:1fr}.lab-nav{display:none}}
+.lab-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.lab-kv{display:flex;justify-content:space-between;padding:7px 10px;border-bottom:1px dashed var(--lab-line);font-size:12.5px}
+.lab-kv b{color:#fff}
+@media (max-width:900px){.lab-shell{grid-template-columns:1fr}.lab-nav{display:none}.lab-grid2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -69,9 +72,7 @@
 <div class="lab-shell">
     <nav class="lab-nav">
         <h4>业务功能</h4>
-        {% for item in theme.nav %}
-        <a href="#" {% if loop.first %}class="active"{% endif %}>{{ item }}</a>
-        {% endfor %}
+        {% for item in theme.nav %}<a href="#" {% if loop.first %}class="active"{% endif %}>{{ item }}</a>{% endfor %}
         <h4 style="margin-top:14px;">入口</h4>
         <a href="{{ back_url }}">返回题目页</a>
     </nav>
@@ -87,54 +88,7 @@
             {% endif %}
             <span class="msg" id="flagMsg"></span>
         </div>
-
-        {% if track == 'real' %}
-        <section class="lab-card">
-            <div class="lab-card-head">
-                <span>{{ theme.role }} · 判定动作</span>
-                <span class="sub lab-materials">附件：{% for m in materials %}<a href="{{ m }}" target="_blank" rel="noopener">{{ m.split('/')[-1] }}</a> {% endfor %}{% if not materials %}无{% endif %}</span>
-            </div>
-            <div class="lab-acts" id="labActions"></div>
-        </section>
-        <section class="lab-card">
-            <div class="lab-card-head"><span>动作输出</span><span class="sub lab-ev" id="labEvidence"></span></div>
-            <div style="padding:14px;"><div class="lab-out" id="labOutput">执行判定动作后，输出与证据显示在这里。</div></div>
-        </section>
-        {% else %}
-        <section class="lab-card">
-            <div class="lab-card-head">
-                <span>{{ theme.role }}</span>
-                <span class="sub">{{ theme.subtitle }}</span>
-            </div>
-            <div id="chatMessages">
-                <div class="bubble system">系统就绪：{{ theme.title }} 业务环境已准备。先完成正常业务基线，再逐步验证边界。</div>
-            </div>
-            {% if track == 'owasp' and level == 1 and sub == 6 %}
-            <div class="lab-upload">
-                <input type="file" id="fileUploadInput" accept=".txt">
-                <button class="lab-btn ghost" onclick="uploadFilePayload({{ level }}, {{ sub }})">上传文本载荷</button>
-                <span class="lab-hint">仅支持 .txt；上传后对话重新开始</span>
-            </div>
-            {% endif %}
-            <div class="lab-composer">
-                <textarea id="userInputArea" rows="2" placeholder="{{ theme.placeholder }}"></textarea>
-                {% if theme.quick %}
-                <div class="lab-quick">
-                    {% for q in theme.quick %}
-                    <button type="button" onclick="document.getElementById('userInputArea').value={{ q|tojson }}; document.getElementById('userInputArea').focus()">{{ q[:26] }}{% if q|length > 26 %}…{% endif %}</button>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                <div class="lab-actions">
-                    <span class="lab-hint">Enter 发送 · Shift+Enter 换行 · {{ theme.workspace }}</span>
-                    <div style="display:flex;gap:8px;">
-                        <button class="lab-btn ghost" onclick="{% if track == 'owasp' %}resetChat({{ level }}, {{ sub }}){% elif track == 'agent' %}resetAgentChat({{ challenge_id }}){% else %}labResetExtended(){% endif %}">重置会话</button>
-                        <button id="sendBtn" class="lab-btn" onclick="{% if track == 'owasp' %}sendMessage({{ level }}, {{ sub }}){% elif track == 'agent' %}sendAgentMessage({{ challenge_id }}){% else %}sendExtendedMessage({{ challenge_id }}){% endif %}">发送</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-        {% endif %}
+        {% include 'labs/' ~ theme.archetype ~ '.html' %}
     </main>
 </div>
 <script src="/static/js/main.js?v={{ asset_version }}"></script>
@@ -146,13 +100,12 @@
     const actionsEl = document.getElementById("labActions");
     const outputEl = document.getElementById("labOutput");
     const evidenceEl = document.getElementById("labEvidence");
-
     cfg.actions.forEach((action, index) => {
         const card = document.createElement("div");
         card.className = "lab-act";
         const fields = (action.fields || []).map((field) => `
             <label>${esc(field.label)}
-            ${field.placeholder && field.placeholder.length > 40 || (field.placeholder || "").startsWith("<")
+            ${((field.placeholder || "").length > 40) || (field.placeholder || "").startsWith("<")
                 ? `<textarea data-field="${esc(field.name)}">${esc(field.placeholder || "")}</textarea>`
                 : `<input data-field="${esc(field.name)}" value="${esc(field.placeholder || "")}">`}
             </label>`).join("");
@@ -162,13 +115,11 @@
             <div style="margin-top:9px;"><button class="lab-btn" data-run="${index}">执行动作</button></div>`;
         actionsEl.append(card);
     });
-
     async function api(path, payload) {
         const response = await fetch(path, {method: "POST", credentials: "same-origin",
             headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload || {})});
         return response.json();
     }
-
     actionsEl.addEventListener("click", async (event) => {
         const button = event.target.closest("[data-run]");
         if (!button) return;
@@ -179,20 +130,15 @@
         try {
             const data = await api(`/api/real-challenge/${cfg.id}/action`, {action: action.name, params});
             outputEl.textContent = JSON.stringify(data.result || data, null, 2).slice(0, 4000);
-            renderState(data.state || {});
+            const evidence = (data.state || {}).evidence || {};
+            evidenceEl.innerHTML = Object.entries(evidence)
+                .map(([key, value]) => `<span class="${value ? "ok" : "no"}">${value ? "●" : "○"} ${esc(key)}</span>`).join(" ");
             if (data.state && data.state.solved && data.result && data.result.flag) {
                 document.getElementById("flagInput").value = data.result.flag;
             }
         } catch (error) { outputEl.textContent = "请求失败：" + error.message; }
         finally { button.disabled = false; }
     });
-
-    function renderState(state) {
-        const evidence = state.evidence || {};
-        evidenceEl.innerHTML = Object.entries(evidence)
-            .map(([key, value]) => `<span class="${value ? "ok" : "no"}">${value ? "●" : "○"} ${esc(key)}</span>`).join(" ");
-    }
-
     window.labSubmitRealFlag = async function () {
         const flag = document.getElementById("flagInput").value.trim();
         const message = document.getElementById("flagMsg");
@@ -200,21 +146,19 @@
         try {
             const data = await api(`/api/real-challenge/${cfg.id}/submit-flag`, {flag});
             message.textContent = data.message || (data.success ? "验证成功" : "验证失败");
-            if (data.success) { message.style.color = "#4ade80"; }
+            if (data.success) message.style.color = "#4ade80";
         } catch (error) { message.textContent = "提交失败：" + error.message; }
     };
 })();
 </script>
 {% else %}
 <script>
-// 综合题重置：extended 页面专用函数在此独立提供
 window.labResetExtended = async function () {
     await fetch("/api/ai-challenge/{{ challenge_id }}/reset", {method: "POST", credentials: "same-origin"});
     const chat = document.getElementById("chatMessages");
     chat.innerHTML = "";
     chat.insertAdjacentHTML("beforeend", '<div class="bubble system">会话已重置，业务环境恢复初始状态。</div>');
 };
-// 聊天区域自适应滚动
 const chatObserver = new MutationObserver(() => {
     const chat = document.getElementById("chatMessages");
     if (chat) chat.scrollTop = chat.scrollHeight;

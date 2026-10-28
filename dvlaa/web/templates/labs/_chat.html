@@ -1,0 +1,33 @@
+<section class="lab-card" style="flex:1;">
+    <div class="lab-card-head">
+        <span>{{ theme.role }}</span>
+        <span class="sub">{{ theme.subtitle }}</span>
+    </div>
+    <div id="chatMessages">
+        <div class="bubble system">系统就绪：{{ theme.title }} 业务环境已准备。先完成正常业务基线，再逐步验证边界。</div>
+    </div>
+    {% if track == 'owasp' and level == 1 and sub == 6 %}
+    <div class="lab-upload">
+        <input type="file" id="fileUploadInput" accept=".txt">
+        <button class="lab-btn ghost" onclick="uploadFilePayload({{ level }}, {{ sub }})">上传文本载荷</button>
+        <span class="lab-hint">仅支持 .txt；上传后对话重新开始</span>
+    </div>
+    {% endif %}
+    <div class="lab-composer">
+        <textarea id="userInputArea" rows="2" placeholder="{{ theme.placeholder }}"></textarea>
+        {% if theme.quick %}
+        <div class="lab-quick">
+            {% for q in theme.quick %}
+            <button type="button" onclick="document.getElementById('userInputArea').value={{ q|tojson }}; document.getElementById('userInputArea').focus()">{{ q[:26] }}{% if q|length > 26 %}…{% endif %}</button>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="lab-actions">
+            <span class="lab-hint">{{ theme.workspace }}</span>
+            <div style="display:flex;gap:8px;">
+                <button class="lab-btn ghost" onclick="{% if track == 'owasp' %}resetChat({{ level }}, {{ sub }}){% elif track == 'agent' %}resetAgentChat({{ challenge_id }}){% else %}labResetExtended(){% endif %}">重置会话</button>
+                <button id="sendBtn" class="lab-btn" onclick="{% if track == 'owasp' %}sendMessage({{ level }}, {{ sub }}){% elif track == 'agent' %}sendAgentMessage({{ challenge_id }}){% else %}sendExtendedMessage({{ challenge_id }}){% endif %}">发送</button>
+            </div>
+        </div>
+    </div>
+</section>

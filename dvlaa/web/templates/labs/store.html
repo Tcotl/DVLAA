@@ -1,0 +1,28 @@
+{# 插件商店：插件卡 + 任务列表 + 助手 #}
+<style>
+.st-card{border:1px solid var(--lab-line);border-radius:10px;padding:13px;background:#0d1626;display:flex;flex-direction:column;gap:6px}
+.st-card b{color:#fff;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.st-tag{padding:2px 8px;border-radius:10px;font-size:10.5px;background:#16233a;color:#aebfd6;width:max-content}
+.st-tag.warn{color:#f87171;border:1px solid #7f1d1d}
+.st-tag.ok{color:#4ade80;border:1px solid #14532d}
+.st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+</style>
+<div style="display:flex;flex-direction:column;gap:14px;">
+    <section class="lab-card"><div class="lab-card-head"><span>插件市场</span><span class="sub">{{ theme.title }}</span></div>
+        <div style="padding:14px;"><div class="st-grid">
+            {% for name, ver, source, signed in theme.props.plugins %}
+            <div class="st-card"><b>{{ name }}@{{ ver }}</b>
+                <span class="st-tag">source: {{ source }}</span>
+                {% if signed %}<span class="st-tag ok">已签名</span>{% else %}<span class="st-tag warn">未签名 · 可跳过校验</span>{% endif %}
+                <button class="lab-btn ghost" style="font-size:11.5px;margin-top:4px;" onclick="document.getElementById('userInputArea').value='帮我安装 {{ name }} 插件';document.getElementById('userInputArea').focus()">安装</button>
+            </div>
+            {% endfor %}
+        </div></div>
+    </section>
+    <div class="lab-grid2">
+        <section class="lab-card"><div class="lab-card-head"><span>文档任务</span></div>
+            <div style="padding:10px;">{% for t in theme.props.tasks %}<div class="lab-kv"><span>{{ t }}</span></div>{% endfor %}</div>
+        </section>
+        {% include 'labs/_chat.html' %}
+    </div>
+</div>
