@@ -34,6 +34,7 @@ from .config import (
     get_all_challenges, get_challenge_config, get_sub_level_count,
 )
 from .modules import agent_llm_track as agent_llm
+from .modules import hosted_agent
 from .modules import modelsel
 from .modules import local_model_manager
 from .modules import learning_library
@@ -3068,6 +3069,47 @@ def _agent_response_json(challenge: dict, result: dict) -> Any:
     })
 
 
+# ── Agent 接入托管做题（hosted 托管评测，逻辑对齐 TSecBench）──
+@app.route("/hosted-agent")
+def hosted_agent_page():
+    return render_template(
+        "hosted_agent.html",
+        asset_version=ASSET_VERSION,
+        hosted_tracks=hosted_agent.TRACKS,
+        default_max_turns=hosted_agent.DEFAULT_MAX_TURNS,
+        default_timeout=hosted_agent.DEFAULT_TIMEOUT_SECONDS,
+    )
+
+
+@app.route("/api/hosted-agent/tasks", methods=["GET", "POST"])
+def api_hosted_agent_tasks():
+    if request.method == "GET":
+        return jsonify({"tasks": hosted_agent.list_tasks()})
+    config = request.get_json(silent=True) or {}
+    base_url = request.host_url.rstrip("/")
+    try:
+        task = hosted_agent.create_task({**config, "base_url": base_url})
+    except (ValueError, RuntimeError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"ok": True, "task": hosted_agent.public_task(task, full=False)}), 201
+
+
+@app.route("/api/hosted-agent/tasks/<task_id>", methods=["GET", "DELETE"])
+def api_hosted_agent_task_detail(task_id: str):
+    if request.method == "DELETE":
+        return jsonify({"ok": hosted_agent.delete_task(task_id)})
+    full = request.args.get("full") == "1"
+    task = hosted_agent.get_task(task_id, full=full)
+    if task is None:
+        return jsonify({"error": "任务不存在"}), 404
+    return jsonify(task)
+
+
+@app.route("/api/hosted-agent/tasks/<task_id>/cancel", methods=["POST"])
+def api_hosted_agent_task_cancel(task_id: str):
+    return jsonify({"ok": hosted_agent.cancel_task(task_id)})
+
+
 @app.route("/api/agent-reset/<int:challenge_id>", methods=["POST"])
 def api_agent_reset(challenge_id: int):
     if get_agent_challenge(challenge_id) is None:
@@ -5008,4 +5050,4 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5000"))
     logger.info("Starting DVLAA on port %d...", port)
     logger.info("Default model: %s", modelsel.current())
-    app.run(host="0.0.0.0", port=port, debug=DEBUG)
+    app.run(host="0.0.0.0", port=port, debug=DEBUG, threaded=True)

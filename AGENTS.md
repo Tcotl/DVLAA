@@ -11,6 +11,7 @@ DVLAA 是面向大模型与智能体应用安全学习的**中文漏洞靶场**�
 - **11 道 AI 综合攻防题目**：独立会话、本地判定器、专属 Flag，WP 覆盖业务基线、状态机关联、复现步骤与修复设计。
 - **30 道 AWDP 攻防赛题目**：AWDP01-10 映射 Dify/RAGFlow/Langflow/Flowise/Open WebUI/n8n 公开 CVE；AWDP11-20 改编自 AWDP 赛事真题、AWDP21-30 改编自同赛事真题。附件源码保存在 `dvlaa/content/awdp_finals/<NN>/{vulnerable,fixed}`，共享判定引擎在 `integrations/targets/finals_core.py`（native 目标与 console 回归双端同源，PRELIM_IDS/FINALS_IDS 分段），补丁契约按 language 字段区分 python/text/js 三类静态检查。**双轨环境**——产品仿真模拟轨默认可用（`integrations/targets/`），官方真实容器轨按需一键启动；同一套 Flag 判定、补丁部署与回归逻辑。全部流量经 5080 单端口网关路由，不额外占用宿主机端口。
 - **6 道真实赛题**（REAL01–REAL06）：改编自真实 AI 安全竞赛的大模型投毒赛道。附件题提供只读材料工作区 + 交互式判定动作；REAL05 另有独立同源 Web 环境（`/real-web/5/`）。WP 通过按钮按需加载。
+- **Agent 接入托管做题**（`/hosted-agent`）：托管式智能体评测，逻辑对齐 TSecBench 云端托管模式——在模型管理接入任意 OpenAI-Compatible 端点后发起托管任务，平台代跑：单题依次独立评测、每题轮数与时间双预算（超时未通过）、Agent 只能使用与人类选手一致的公开接口（聊天/判定动作/目标 Web 动作/Flag 提交）、每轮动作与观测完整留档（Flag 脱敏），评分沿用平台原有判定逻辑。
 
 代码主体位于 `dvlaa/` 包（`server.py` 为 Flask 主应用），根目录 `app.py` 仅是兼容旧脚本的入口。UI 为 DVLAA 暗色攻防控制台风格，**全项目禁止使用 Emoji 表情符**。
 
@@ -83,6 +84,7 @@ dvlaa/
     dify_integration.py    #   官方 Dify 就绪状态与 runtime_flag
     env_orchestrator.py    #   真实复现环境编排（栈状态/启动/停止 API 后端）
     audit_events.py / conversations.py / modelsel.py / learning_library.py ...
+    hosted_agent.py         #   Agent 接入托管做题（托管评测任务/评测线程/Agent循环/留档）
   web/
     templates/             #   Jinja2 页面（awdp_challenge.html、real_challenge.html 等）
     static/js/main.js      #   前端逻辑（AWDP iframe 工作台、导航记忆等）

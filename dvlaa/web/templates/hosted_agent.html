@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Agent 托管评测 · DVLAA{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <section class="panel-card" style="margin-bottom: 1rem;">
+        <div class="panel-header"><span>[托管评测] Agent 接入托管做题</span></div>
+        <div class="panel-body">
+            <p style="color: var(--text-secondary); font-size: 0.82rem; line-height: 1.7;">
+                托管逻辑对齐 TSecBench 云端托管模式：<strong>平台代跑</strong>一次自主安全测试 Agent 评测——
+                单题依次独立评测、每题限时（轮数与时间双预算，超时视为未通过）、统一接口与评分规则
+                （Agent 只能使用与人类选手完全一致的公开接口）、每轮动作与观测完整留档（Flag 脱敏）。
+                接入方式：在 <a href="/models">LLM 模型管理</a> 接入任意 OpenAI-Compatible 端点并发起任务即可，无需自建环境。
+            </p>
+            <form id="hostedForm" class="dv-form" onsubmit="event.preventDefault(); createHostedTask();">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.6rem;margin-bottom:0.6rem;">
+                    <label>任务名称<input id="hostedLabel" class="input-dv" placeholder="例如：Qwen-Agent 全量评测"></label>
+                    <label>每题最大轮数<input id="hostedMaxTurns" class="input-dv" type="number" min="2" max="30" value="{{ default_max_turns }}"></label>
+                    <label>每题限时（秒）<input id="hostedTimeout" class="input-dv" type="number" min="60" max="3600" step="30" value="{{ default_timeout }}"></label>
+                    <label>题量上限（0=不限）<input id="hostedLimit" class="input-dv" type="number" min="0" max="81" value="0"></label>
+                </div>
+                <div style="margin-bottom:0.6rem;">
+                    <strong style="font-size:0.8rem;">参赛赛道</strong>
+                    <div id="hostedTracks" style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.35rem;font-size:0.8rem;">
+                        {% for track in hosted_tracks %}
+                        <label style="display:flex;align-items:center;gap:0.35rem;">
+                            <input type="checkbox" value="{{ track }}" {% if loop.first %}checked{% endif %}>
+                            <span>{{ {'owasp':'OWASP LLM Top 10（24 题）','agent':'Agent Top 10（10 题）','extended':'综合攻防（11 题）','real':'真实赛题（6 题）','awdp':'AWDP 攻防赛（30 题）'}[track] }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button type="submit" class="btn-dv btn-dv-primary">发起托管评测</button>
+                <span id="hostedFormMsg" style="margin-left:0.6rem;font-size:0.78rem;"></span>
+            </form>
+        </div>
+    </section>
+
+    <section class="panel-card">
+        <div class="panel-header">
+            <span>[评测任务] 托管任务列表</span>
+            <button class="btn-dv btn-dv-sm" onclick="refreshTasks(true)">刷新</button>
+        </div>
+        <div class="panel-body" id="hostedTaskList">加载中…</div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const esc = (value) => String(value == null ? "" : value).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+    let pollTimer = null;
+
+    async function api(path, options) {
+        const response = await fetch(path, {credentials: "same-origin", ...(options || {})});
+        return response.json();
+    }
+
+    window.createHostedTask = async function () {
+        const tracks = [...document.querySelectorAll("#hostedTracks input:checked")].map((el) => el.value);
+        const payload = {
+            label: document.getElementById("hostedLabel").value.trim(),
+            tracks,
+            max_turns: Number(document.getElementById("hostedMaxTurns").value) || 8,
+            timeout_seconds: Number(document.getElementById("hostedTimeout").value) || 600,
+            limit: Number(document.getElementById("hostedLimit").value) || 0,
+        };
+        const message = document.getElementById("hostedFormMsg");
+        if (!tracks.length) { message.textContent = "请至少选择一个赛道。"; return; }
+        message.textContent = "正在发起…";
+        try {
+            const data = await api("/api/hosted-agent/tasks", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload)});
+            if (!data.ok) { message.textContent = data.error || "发起失败"; return; }
+            message.textContent = "已发起，任务运行中。";
+            refreshTasks(true);
+        } catch (error) { message.textContent = "发起失败：" + error.message; }
+    };
+
+    function statusBadge(status) {
+        const map = {running: ["running", "basic"], solved: ["已通过", "solved"], finished: ["未通过", "hard"],
+                     pending: ["待评测", ""], error: ["异常", "hard"], timeout: ["超时", "hard"],
+                     cancelled: ["已取消", "medium"], done: ["已完成", "solved"], interrupted: ["已中断", "medium"], failed: ["失败", "hard"]};
+        const [text, cls] = map[status] || [status, ""];
+        return cls ? `<span class="badge-tag ${cls}">${esc(text)}</span>` : `<span class="badge-tag">${esc(text)}</span>`;
+    }
+
+    function renderTask(task) {
+        const solved = task.summary.solved, total = task.summary.total, finished = task.summary.finished;
+        const percent = total ? Math.round(finished / total * 100) : 0;
+        const rows = (task.items || []).map((item) => `
+            <tr data-task="${esc(task.id)}" data-item="${esc(item.code)}" style="cursor:pointer;">
+                <td>${esc(item.code)}</td>
+                <td>${esc(item.name || "")}</td>
+                <td>${esc(item.track)}</td>
+                <td>${statusBadge(item.status)}</td>
+                <td>${item.turns_count || 0}</td>
+                <td>${esc(item.stop_reason || item.error || "")}</td>
+                <td>${item.flag ? `<code>${esc(item.flag)}</code>` : "-"}</td>
+            </tr>`).join("");
+        return `
+        <div class="hosted-task" id="task-${esc(task.id)}" style="border:1px solid var(--border,#2a3548);border-radius:8px;padding:0.8rem;margin-bottom:1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:0.8rem;flex-wrap:wrap;">
+                <div>
+                    <strong>${esc(task.label)}</strong>
+                    <span style="color:var(--text-secondary);font-size:0.75rem;margin-left:0.5rem;">
+                        ${esc(task.model && task.model.name || "")} · ${esc(task.created_at)} · ${statusBadge(task.status)}
+                    </span>
+                </div>
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <span style="font-size:0.8rem;">通过 <strong style="color:#4ade80;">${solved}</strong>/${total} · 进度 ${finished}/${total}（${percent}%）</span>
+                    ${task.status === "running" ? `<button class="btn-dv btn-dv-sm btn-dv-danger" onclick="cancelTask('${esc(task.id)}')">取消</button>` : ""}
+                    <button class="btn-dv btn-dv-sm" onclick="deleteTask('${esc(task.id)}')">删除</button>
+                </div>
+            </div>
+            <div style="height:6px;background:#1b2333;border-radius:3px;margin:0.6rem 0;overflow:hidden;">
+                <div style="height:100%;width:${percent}%;background:linear-gradient(90deg,#1769d1,#4ade80);"></div>
+            </div>
+            <details>
+                <summary style="cursor:pointer;font-size:0.78rem;color:var(--text-secondary);">逐题明细（点击行查看每轮动作与观测）</summary>
+                <div style="overflow-x:auto;margin-top:0.5rem;">
+                    <table class="dv-table" style="width:100%;font-size:0.75rem;border-collapse:collapse;">
+                        <thead><tr style="color:var(--text-secondary);text-align:left;">
+                            <th>题目</th><th>名称</th><th>赛道</th><th>状态</th><th>轮数</th><th>结束原因</th><th>Flag</th>
+                        </tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            </details>
+            <div class="item-detail" id="detail-${esc(task.id)}" style="display:none;margin-top:0.6rem;"></div>
+        </div>`;
+    }
+
+    async function refreshTasks(withPolling) {
+        let data;
+        try { data = await api("/api/hosted-agent/tasks"); } catch (error) { return; }
+        const list = document.getElementById("hostedTaskList");
+        list.innerHTML = (data.tasks || []).map(renderTask).join("") || '<p style="color:var(--text-secondary);">暂无托管任务。</p>';
+        (data.tasks || []).forEach((task) => {
+            (task.items || []).forEach((item) => {
+                const row = list.querySelector(`tr[data-task="${task.id}"][data-item="${CSS.escape(item.code)}"]`);
+                if (row) row.addEventListener("click", () => loadItemDetail(task.id, item.code));
+            });
+        });
+        const running = (data.tasks || []).some((task) => task.status === "running");
+        if (withPolling && running && !pollTimer) pollTimer = setInterval(() => refreshTasks(true), 2500);
+        if ((!withPolling || !running) && pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+
+    async function loadItemDetail(taskId, code) {
+        const panel = document.getElementById(`detail-${taskId}`);
+        panel.style.display = "block";
+        panel.textContent = "加载逐轮记录…";
+        const task = await api(`/api/hosted-agent/tasks/${taskId}?full=1`);
+        const item = (task.items || []).find((entry) => entry.code === code);
+        if (!item) { panel.textContent = "未找到该题记录。"; return; }
+        const turns = (item.turns || []).map((turn) => `
+            <div style="border-left:2px solid #1769d1;padding:0.3rem 0.6rem;margin:0.3rem 0;background:#111a2b;border-radius:0 4px 4px 0;">
+                <div style="font-size:0.72rem;color:#7aa2f7;">第 ${turn.turn} 轮 · 动作 ${esc(JSON.stringify(turn.action))}</div>
+                <div style="font-size:0.75rem;white-space:pre-wrap;">${esc(turn.observation)}</div>
+            </div>`).join("");
+        panel.innerHTML = `<strong style="font-size:0.8rem;">${esc(code)} 逐轮记录（${esc(item.stop_reason || "")}）</strong>${turns || "<p>无记录。</p>"}`;
+    }
+
+    window.cancelTask = async function (taskId) { await api(`/api/hosted-agent/tasks/${taskId}/cancel`, {method: "POST"}); refreshTasks(true); };
+    window.deleteTask = async function (taskId) { await api(`/api/hosted-agent/tasks/${taskId}`, {method: "DELETE"}); refreshTasks(false); };
+
+    refreshTasks(true);
+})();
+</script>
+{% endblock %}
