@@ -2993,8 +2993,13 @@ def api_agent_chat(challenge_id: int):
         else:
             try:
                 tool_result = agent_llm.execute_tool(challenge_id, tool, args, state)
+                data_payload = tool_result.get("data") or {}
+                data_text = (
+                    "\n[业务数据] " + json.dumps(data_payload, ensure_ascii=False)[:1500]
+                    if data_payload else ""
+                )
                 response = (
-                    f"[控制台执行] {tool_result['tool']} 完成：{tool_result['message']}"
+                    f"[控制台执行] {tool_result['tool']} 完成：{tool_result['message']}" + data_text
                 )
             except agent_llm.ToolExecutionError as exc:
                 response = f"[调用拒绝] {exc.message}"
