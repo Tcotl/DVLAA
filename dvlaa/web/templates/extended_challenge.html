@@ -91,6 +91,7 @@
                     </div>
                 </div>
                 <div class="terminal-controls dv-assistant-chat-actions">
+                    <a href="/lab/extended/{{ extended_challenge.id }}/" target="_blank" rel="noopener" class="btn-dv btn-dv-sm btn-dv-primary">独立业务台</a>
                     <button type="button" onclick="openExtendedWriteup({{ extended_challenge.id }}, '{{ extended_challenge.code }}')" class="btn-dv btn-dv-sm btn-dv-primary">WP 题解</button>
                     <button type="button" onclick="openExtendedSource({{ extended_challenge.id }})" class="btn-dv btn-dv-sm btn-dv-primary">查看提示词与源码</button>
                     <button type="button" onclick="resetExtendedChat({{ extended_challenge.id }})" class="btn-dv btn-dv-sm btn-dv-danger">重置对话</button>

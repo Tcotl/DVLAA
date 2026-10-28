@@ -134,6 +134,7 @@
                     </div>
                 </div>
                 <div class="terminal-controls dv-assistant-chat-actions">
+                    <a href="/lab/agent/{{ agent_challenge.id }}/" target="_blank" rel="noopener" class="btn-dv btn-dv-sm btn-dv-primary">独立业务台</a>
                     <button type="button" onclick="openAgentWriteup({{ agent_challenge.id }}, '{{ agent_challenge.code }}')" class="btn-dv btn-dv-sm btn-dv-primary">WP 题解</button>
                     <button type="button" onclick="openAgentSource({{ agent_challenge.id }})" class="btn-dv btn-dv-sm btn-dv-primary">查看提示词与源码</button>
                     <button onclick="resetAgentChat({{ agent_challenge.id }})" class="btn-dv btn-dv-sm btn-dv-danger">重置对话</button>

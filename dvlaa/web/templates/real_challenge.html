@@ -110,6 +110,7 @@
         <section class="panel-card real-writeup-entry" style="margin-top: 1rem;">
             <div class="panel-header">
                 <div><span>[WP] 官方题解</span><small>{% if real_challenge.id == 5 %}完成题目后查看完整复现与分析说明{% else %}完成题目后查看完整复现、分析和修复说明{% endif %}</small></div>
+                <a href="/lab/real/{{ real_challenge.id }}/" target="_blank" rel="noopener" class="btn-dv btn-dv-sm btn-dv-primary">独立业务台</a>
                 <button type="button" class="btn-dv btn-dv-sm btn-dv-primary" onclick="openRealWriteup({{ real_challenge.id }}, '{{ real_challenge.code }}')">打开 WP 题解</button>
             </div>
             <div class="panel-body"><p>WP 默认隐藏。选手先通过题目专属业务页面完成分析和复现，点击按钮后在弹窗中查看完整题解。</p></div>

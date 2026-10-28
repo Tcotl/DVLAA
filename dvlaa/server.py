@@ -51,6 +51,7 @@ from .modules.audit_events import (
     project_legacy_audit,
 )
 from .content.agent_challenges import AGENT_CHALLENGES, AGENT_FLAGS, SCENARIO_STEPS, agent_progress_total, get_agent_challenge, help_content as agent_help_content
+from .content.workbench_themes import agent_theme, extended_theme, owasp_theme, real_theme
 from .content.agent_courseware import AGENT_TOP10_COURSEWARE, AGENT_TOP10_OVERVIEW
 from .content.internet_ranges import (
     INTERNET_RANGES, PROMPT_AIRLINES_CHALLENGES, PROMPT_AIRLINES_UI_TERMS,
@@ -3081,6 +3082,58 @@ def _agent_response_json(challenge: dict, result: dict) -> Any:
             "progress": result["progress"],
         },
     })
+
+
+# ── 每题独立业务台（与 AWDP /awdp-web/<id>/ 的独立目标页对齐）──
+@app.route("/lab/owasp/<int:level>/<int:sub>/", strict_slashes=False)
+def lab_owasp(level: int, sub: int):
+    if get_challenge_config(level, sub) is None:
+        return redirect(url_for("index"))
+    return render_template(
+        "lab_console.html", asset_version=ASSET_VERSION, track="owasp",
+        theme=owasp_theme(level, sub), level=level, sub=sub, challenge_id=None,
+        challenge_code=f"LLM{level:02d}-{sub}", back_url=f"/challenge/{level}/{sub}",
+        real_actions=None, materials=None,
+    )
+
+
+@app.route("/lab/agent/<int:challenge_id>/", strict_slashes=False)
+def lab_agent(challenge_id: int):
+    if get_agent_challenge(challenge_id) is None:
+        return redirect(url_for("index"))
+    return render_template(
+        "lab_console.html", asset_version=ASSET_VERSION, track="agent",
+        theme=agent_theme(challenge_id), level=None, sub=None, challenge_id=challenge_id,
+        challenge_code=f"ASI{challenge_id:02d}", back_url=f"/agent-challenge/{challenge_id}",
+        real_actions=None, materials=None,
+    )
+
+
+@app.route("/lab/extended/<int:challenge_id>/", strict_slashes=False)
+def lab_extended(challenge_id: int):
+    if get_extended_challenge(challenge_id) is None:
+        return redirect(url_for("index"))
+    return render_template(
+        "lab_console.html", asset_version=ASSET_VERSION, track="extended",
+        theme=extended_theme(challenge_id), level=None, sub=None, challenge_id=challenge_id,
+        challenge_code=f"AIC{challenge_id:02d}", back_url=f"/ai-challenge/{challenge_id}",
+        real_actions=None, materials=None,
+    )
+
+
+@app.route("/lab/real/<int:challenge_id>/", strict_slashes=False)
+def lab_real(challenge_id: int):
+    challenge = get_real_challenge(challenge_id)
+    if challenge is None:
+        return redirect(url_for("index"))
+    materials = [f"/api/real-challenge/{challenge_id}/materials/{index}"
+                 for index in range(len(real_materials_content(challenge_id)))]
+    return render_template(
+        "lab_console.html", asset_version=ASSET_VERSION, track="real",
+        theme=real_theme(challenge_id), level=None, sub=None, challenge_id=challenge_id,
+        challenge_code=f"REAL{challenge_id:02d}", back_url=f"/real-challenge/{challenge_id}",
+        real_actions=challenge.get("actions", []), materials=materials,
+    )
 
 
 # ── Agent 接入托管做题（hosted 托管评测，逻辑对齐 TSecBench）──
